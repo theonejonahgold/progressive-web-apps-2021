@@ -1,0 +1,22 @@
+<main>
+  <h3><a href="{{story.uRL}}" target="_blank" rel="noopener norefferer">{{story.title}}</a></h3>
+  <p>{{story.score}} points bij {{story.by}} et {{story.time}}</p>
+  <section>
+    <h3>{{len comments}} Reactions</h3>
+    <ul>
+      {{#each comments}}
+      {{#unless this.deleted}}
+      {{#unless this.dead}}
+      <li>
+        <article>
+          <p>
+            {{{this.text}}}
+          </p>
+        </article>
+      </li>
+      {{/unless}}
+      {{/unless}}
+      {{/each}}
+    </ul>
+  </section>
+</main>

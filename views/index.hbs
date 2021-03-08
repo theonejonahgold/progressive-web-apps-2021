@@ -1,31 +1,17 @@
-<!DOCTYPE html>
-<html lang='nl'>
-
-<head>
-  <meta charset='UTF-8'>
-  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-  <title>Henkernieuws - Hoom</title>
-</head>
-
-<body>
-  <header>
-    <hgroup>
-      <h1>Henkernieuws</h1>
-      <h2>Oonlie voor de riel henkers</h2>
-    </hgroup>
-    <ul>
-      {{#each stories}}
-        {{#unless this.deleted}}
-          <li>
-            <article>
-              <h3>{{this.title}}</h3>
-              <p>Door {{this.by}}</p>
-            </article>
-          </li>
-        {{/unless}}
-      {{/each}}
-    </ul>
-  </header>
-</body>
-
-</html>
+<ul>
+  {{#each stories}}
+  {{#unless this.deleted}}
+  {{#unless this.dead}}
+  {{#if this.title}}
+  <li>
+    <article>
+      <a href="{{this.uRL}}" target="_blank" rel="noopener norefferer"><h3>{{this.title}}</h3></a>
+      <p>Bij {{this.by}}</p>
+      <a href="/story/{{this.iD}}">Reacties</a>
+    </article>
+  </li>
+  {{/if}}
+  {{/unless}}
+  {{/unless}}
+  {{/each}}
+</ul>

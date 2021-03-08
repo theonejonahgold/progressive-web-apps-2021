@@ -1,4 +1,4 @@
-module github.com/theonejonahgold/progressive-web-app-2021
+module github.com/theonejonahgold/pwa
 
 go 1.16
 

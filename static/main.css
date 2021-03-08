@@ -1,0 +1,27 @@
+:root {
+  font-family: "Comic Sans MS", sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+header {
+  background-color: #ff6600;
+}
+
+li:nth-child(3n)::marker {
+  content: "😎";
+}
+
+li:nth-child(3n + 1)::marker {
+  content: "🤪";
+}
+
+li:nth-child(3n + 2)::marker {
+  content: "🥴";
+}
+
+li:nth-child(even) {
+  background-color: lightgray;
+}
