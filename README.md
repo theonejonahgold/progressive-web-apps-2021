@@ -1,6 +1,10 @@
-# Progressive Web Apps @cmda-minor-web · 20-21
+# Henkernieuws
 
-In this course we will convert the client side web application previously made Web App From Scratch into a server side rendered application. We also add functionalities based on the Service Worker and turn the application into a Progressive Web App. Ultimately we are going to implement a series of optimisations to improve the performance of the application.  
+Henkernieuws hes de best nieuws voor riel henkers lijk joe en mie.
+
+Ritten in go en javascript, lijk ee pro.
+
+<!-- In this course we will convert the client side web application previously made Web App From Scratch into a server side rendered application. We also add functionalities based on the Service Worker and turn the application into a Progressive Web App. Ultimately we are going to implement a series of optimisations to improve the performance of the application.  
 
 ## Learning goals
 - _You understand the difference between client side and server side rendering and you can apply server side rendering
@@ -32,7 +36,7 @@ Goals: Convert application to a Progressive Web App
 
 Doel: Optimize the Critical Rendering Path   
 [Exercises](https://github.com/cmda-minor-web/progressive-web-apps-2021/blob/master/course/week-3.md)  
-[Critical Rendering Path - slides Declan Rek](https://github.com/cmda-minor-web/progressive-web-apps-1920/blob/master/course/cmd-2020-critical-rendering-path.pdf)
+[Critical Rendering Path - slides Declan Rek](https://github.com/cmda-minor-web/progressive-web-apps-1920/blob/master/course/cmd-2020-critical-rendering-path.pdf) -->
 
 
 <!-- Add a link to your live demo in Github Pages 🌐-->
