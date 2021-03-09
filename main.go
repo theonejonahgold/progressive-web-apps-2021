@@ -40,7 +40,7 @@ func index(c *fiber.Ctx) error {
 	}
 	sort.Sort(s.ByScore(*stories))
 
-	return c.Render("index", fiber.Map{
+	return c.Render("pages/index", fiber.Map{
 		"stories": stories,
 		"title":   "hoom",
 	}, "layouts/main")
@@ -79,7 +79,7 @@ func story(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.Render("story", fiber.Map{
+	return c.Render("pages/story", fiber.Map{
 		"story":    s,
 		"comments": comments,
 		"title":    s.Title,
