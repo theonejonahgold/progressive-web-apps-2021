@@ -4,6 +4,34 @@ Henkernieuws hes de best nieuws voor riel henkers lijk joe en mie.
 
 Ritten in go en javascript, lijk ee pro.
 
+## Getting started
+
+This program is built with Go@^1.16. This means that you have to install one of the Go 1.16 versions via the [golang website](https://golang.org). Also make sure you have [NodeJS](https://nodejs.org) installed with [Yarn v1](http://classic.yarnpkg.com) or (non-preferably) the [NPM package mananger](https://npmjs.com).
+
+### Installing the project
+
+```sh
+$ git clone https://github.com/theonejonahgold/progressive-web-apps-2021.git pwa
+$ cd pwa
+$ go get && (yarn || npm install)
+$ go build main.go -o henkernieuws
+```
+
+### Available NPM commands
+
+```sh
+$ npm run dev || yarn dev     # Runs dev environment for the website
+$ npm run build || yarn build # Compiles the entire website
+```
+
+With these commands, the `pwa` file is built which runs a couple of commands on its own as well:
+
+```sh
+$ ./pwa ssg   # Downloads all henkernieuws data, and prerenders the entire site.
+$ ./pwa ssr   # Runs a Fiber (express-like) server serving handlebars templates
+$ ./pwa serve # Serves the contents of the dist folder
+```
+
 <!-- In this course we will convert the client side web application previously made Web App From Scratch into a server side rendered application. We also add functionalities based on the Service Worker and turn the application into a Progressive Web App. Ultimately we are going to implement a series of optimisations to improve the performance of the application.  
 
 ## Learning goals

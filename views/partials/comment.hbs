@@ -1,0 +1,16 @@
+{{#unless this.deleted}}
+{{#unless this.dead}}
+<li>
+  <article>
+    <p>
+      {{{this.text}}}
+    </p>
+    <ul>
+      {{#each this.comments}}
+      {{> partials/comment}}
+      {{/each}}
+    </ul>
+  </article>
+</li>
+{{/unless}}
+{{/unless}}

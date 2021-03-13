@@ -1,5 +1,6 @@
 /* eslint-env node */
 
+
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
   mount: {
@@ -10,8 +11,9 @@ module.exports = {
     output: 'stream',
   },
   buildOptions: {
-    out: 'static',
-    watch: true,
+    out: 'dist/static',
+    watch: process.env.NODE_ENV !== 'production',
+    clean: false
   },
   packageOptions: { source: 'remote', types: true, },
   optimize: {
@@ -21,5 +23,6 @@ module.exports = {
     target: 'es2020',
     entrypoints: 'auto',
     manifest: true,
+    minify: true,
   },
 }

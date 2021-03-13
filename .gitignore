@@ -1,7 +1,13 @@
+# General stuff
+.DS_Store
+pwa
+
+# Node.JS stuff
 node_modules/
-
-*.fiber.gz
-
 yarn-error.log
+package-lock.json
 
-static/
+# Go stuff
+dist/
+dump.json
+*.fiber.gz
