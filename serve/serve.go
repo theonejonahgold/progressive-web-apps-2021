@@ -35,6 +35,6 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 func serveStaticFiles(ctx *fasthttp.RequestCtx) {
 	wd, _ := os.Getwd()
 	url := string(ctx.Path())
-	fp := filepath.Join(wd, "dist", url)
+	fp := filepath.Join(wd, "dist", "static", url)
 	ctx.SendFile(fp)
 }
