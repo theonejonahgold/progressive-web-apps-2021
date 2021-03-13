@@ -1,5 +1,4 @@
 // +heroku goVersion 1.16
-// +heroku install ./... .
 module github.com/theonejonahgold/pwa
 
 go 1.16
