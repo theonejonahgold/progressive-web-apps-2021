@@ -1,1 +1,1 @@
-web: ./pwa serve
+web: npm run start
