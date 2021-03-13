@@ -1,1 +1,1 @@
-web: ./pwa serve
+web: ./bin/pwa serve

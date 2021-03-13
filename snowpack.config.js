@@ -16,13 +16,13 @@ module.exports = {
     clean: false
   },
   packageOptions: { source: 'remote', types: true, },
-  optimize: {
-    bundle: true,
-    splitting: true,
-    treeshake: true,
-    target: 'es2020',
-    entrypoints: 'auto',
-    manifest: true,
-    minify: true,
-  },
+  // optimize: {
+  //   bundle: true,
+  //   splitting: true,
+  //   treeshake: true,
+  //   target: 'es2020',
+  //   entrypoints: 'auto',
+  //   manifest: true,
+  //   minify: true,
+  // },
 }
