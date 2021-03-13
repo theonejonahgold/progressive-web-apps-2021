@@ -4,9 +4,9 @@
   "description": "Henkernieuws hes de best nieuws voor riel henkers lijk joe en mie.",
   "main": "index.js",
   "scripts": {
-    "start": "./bin/pwa serve",
+    "start": "./pwa serve",
     "dev": "cross-env NODE_ENV=development concurrently \"snowpack build\" \"./pwa ssr\"",
-    "build": "./bin/pwa ssg",
+    "build": "./pwa ssg",
     "build:snowpack": "cross-env NODE_ENV=production snowpack build"
   },
   "repository": {

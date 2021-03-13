@@ -10,8 +10,12 @@ import (
 )
 
 func Serve() error {
-	fmt.Println("Starting serve on port 3000")
-	return fasthttp.ListenAndServe(":3000", fastHTTPHandler)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	fmt.Println("Starting serve on port", port)
+	return fasthttp.ListenAndServe(":"+port, fastHTTPHandler)
 }
 
 func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
