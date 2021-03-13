@@ -4,12 +4,10 @@
   "description": "Henkernieuws hes de best nieuws voor riel henkers lijk joe en mie.",
   "main": "index.js",
   "scripts": {
-    "preinstall": "go get",
     "start": "./pwa serve",
     "predev": "yarn build:go",
     "dev": "cross-env NODE_ENV=development concurrently \"snowpack build\" \"./pwa ssr\"",
-    "build": "yarn build:go && ./pwa ssg",
-    "build:go": "go build -o pwa main.go",
+    "build": "./pwa ssg",
     "build:snowpack": "cross-env NODE_ENV=production snowpack build"
   },
   "repository": {
