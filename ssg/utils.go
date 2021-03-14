@@ -2,6 +2,7 @@ package ssg
 
 import (
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -16,16 +17,24 @@ func createFile(path string) (*os.File, error) {
 	return os.Create(path)
 }
 
-func prepareTemplate() {
+func prepareTemplate() (*raymond.Template, error) {
 	fmt.Println("Preparing Template")
 	d, _ := os.Getwd()
-	headFP := filepath.Join(d, "views", "partials", "head.hbs")
-	headerFP := filepath.Join(d, "views", "partials", "header.hbs")
-	commentFP := filepath.Join(d, "views", "partials", "comment.hbs")
-	headBuf, _ := ioutil.ReadFile(headFP)
-	headerBuf, _ := ioutil.ReadFile(headerFP)
-	commentBuf, _ := ioutil.ReadFile(commentFP)
-	raymond.RegisterPartial("partials/head", string(headBuf))
-	raymond.RegisterPartial("partials/header", string(headerBuf))
-	raymond.RegisterPartial("partials/comment", string(commentBuf))
+	partialP := filepath.Join(d, "views", "partials")
+	filepath.Walk(partialP, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		base := filepath.Base(partialP)
+		name := base + "/" + filepath.Base(path[:len(path)-4])
+		buf, _ := ioutil.ReadFile(path)
+		raymond.RegisterPartial(name, string(buf))
+		return nil
+	})
+	mainLay := filepath.Join(d, "views", "layouts", "main.hbs")
+
+	return raymond.ParseFile(mainLay)
 }

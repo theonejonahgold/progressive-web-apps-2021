@@ -2,7 +2,6 @@ package ssg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/aymerick/raymond"
 	m "github.com/theonejonahgold/pwa/models"
+	u "github.com/theonejonahgold/pwa/utils"
 )
 
 // GeneratePages generates all pages for static rendering
@@ -19,11 +19,14 @@ func SSG() error {
 	if err != nil {
 		return err
 	}
-	prepareTemplate()
-	if err := renderIndex(data); err != nil {
+	main, err := prepareTemplate()
+	if err != nil {
 		return err
 	}
-	if err := renderStories(data); err != nil {
+	if err := renderIndex(main, data); err != nil {
+		return err
+	}
+	if err := renderStories(main, data); err != nil {
 		return err
 	}
 	if err := executeSnowpackBuild(); err != nil {
@@ -33,26 +36,35 @@ func SSG() error {
 	return nil
 }
 
-func renderIndex(data []*m.Story) error {
+func renderIndex(lay *raymond.Template, data []*m.Story) error {
 	fmt.Println("Rendering Index Page")
 	d, _ := os.Getwd()
-	t, err := ioutil.ReadFile(filepath.Join(d, "views", "index.hbs"))
+	t, err := raymond.ParseFile(filepath.Join(d, "views", "index.hbs"))
 	if err != nil {
 		return err
 	}
-	r, err := raymond.Render(string(t), map[string]interface{}{
+
+	bind := map[string]interface{}{
 		"stories": data,
-	})
+	}
+	e, err := t.Exec(bind)
 	if err != nil {
+		return err
+	}
+
+	bind["embed"] = raymond.SafeString(e)
+	r, err := lay.Exec(bind)
+	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	return savePage([]byte(r), "index.html")
 }
 
-func renderStories(data []*m.Story) error {
+func renderStories(lay *raymond.Template, data []*m.Story) error {
 	fmt.Println("Rendering Story Pages")
 	d, _ := os.Getwd()
-	t, err := ioutil.ReadFile(filepath.Join(d, "views", "story.hbs"))
+	t, err := raymond.ParseFile(filepath.Join(d, "views", "story.hbs"))
 	if err != nil {
 		return err
 	}
@@ -60,22 +72,30 @@ func renderStories(data []*m.Story) error {
 	var wg sync.WaitGroup
 	for _, v := range data {
 		wg.Add(1)
-		go renderStory(v, t, &wg)
+		go renderStory(lay, t, v, &wg)
 	}
 	wg.Wait()
 	return nil
 }
 
-func renderStory(s *m.Story, t []byte, wg *sync.WaitGroup) error {
+func renderStory(lay *raymond.Template, t *raymond.Template, s *m.Story, wg *sync.WaitGroup) error {
 	defer wg.Done()
 
-	r, err := raymond.Render(string(t), map[string]interface{}{
+	bind := map[string]interface{}{
 		"story": s,
-	})
+	}
+	e, err := t.Exec(bind)
+	if err != nil {
+		return err
+	}
+
+	bind["embed"] = raymond.SafeString(e)
+	r, err := lay.Exec(bind)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
+
 	return savePage([]byte(r), "story/"+strconv.Itoa(s.ID)+"/index.html")
 }
 
@@ -97,18 +117,14 @@ func savePage(t []byte, p string) error {
 
 func executeSnowpackBuild() error {
 	fmt.Println("Running Snowpack Build")
-	npmp, err := exec.LookPath("npm")
+	file, err := u.RetrieveSnowpackFilePath()
 	if err != nil {
 		return err
 	}
-	wd, _ := os.Getwd()
-	cmd := exec.Cmd{
-		Path:   npmp,
-		Args:   []string{"npm", "run", "build:snowpack"},
-		Stdin:  os.Stdin,
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-		Dir:    wd,
-	}
+	cmd := exec.Command(file, "build")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = append(os.Environ(), "NODE_ENV=production")
 	return cmd.Run()
 }

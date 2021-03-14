@@ -1,30 +1,19 @@
-<!DOCTYPE html>
-<html lang="nl">
-
-{{> partials/head}}
-
-<body>
-  {{> partials/header}}
-  <ul>
-    {{#each stories}}
-    {{#unless this.deleted}}
-    {{#unless this.dead}}
-    {{#if this.title}}
-    <li>
-      <article>
-        <a href="{{this.uRL}}" target="_blank" rel="noopener norefferer">
-          <h3>{{this.title}}</h3>
-        </a>
-        <p>Bij {{this.by}} wif {{this.score}} points</p>
-        <a href="/story/{{this.iD}}">reactions</a>
-      </article>
-    </li>
-    {{/if}}
-    {{/unless}}
-    {{/unless}}
-    {{/each}}
-  </ul>
-
-</body>
-
-</html>
+<ul>
+  {{#each stories}}
+  {{#unless this.deleted}}
+  {{#unless this.dead}}
+  {{#if this.title}}
+  <li>
+    <article>
+      <a href="{{this.uRL}}" target="_blank" rel="noopener norefferer">
+        <h3>{{this.title}}</h3>
+      </a>
+      <p>Bij {{this.by}} wif {{this.score}} points</p>
+      <a href="/story/{{this.iD}}">reactions</a>
+    </article>
+  </li>
+  {{/if}}
+  {{/unless}}
+  {{/unless}}
+  {{/each}}
+</ul>

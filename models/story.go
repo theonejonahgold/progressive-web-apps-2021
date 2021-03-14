@@ -23,7 +23,7 @@ type Story struct {
 }
 
 func (e *Story) PopulateComments() {
-	kids := e.GetKids()
+	kids := e.Kids
 	if len(kids) == 0 {
 		return
 	}
@@ -42,7 +42,7 @@ func (e *Story) PopulateComments() {
 
 	go CloseWhenWGIsDone(cc, &wg)
 
-	var cs []*Comment
+	cs := make([]*Comment, 0, len(kids))
 	for v := range cc {
 		if v.Type == "comment" {
 			cs = append(cs, v)
@@ -65,7 +65,7 @@ func NewStory() *Story {
 }
 
 // StoryIDArray is a list of Story IDs
-type StoryIDArray []int
+type StoryIDArray [500]int
 
 type StoriesByTime []*Story
 

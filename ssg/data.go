@@ -23,7 +23,7 @@ func prepareData() (m.DataStructure, error) {
 	var wg sync.WaitGroup
 	for _, v := range st {
 		wg.Add(1)
-		go u.FetchComments(v, &wg)
+		go u.FetchComments(v, &wg, -1)
 	}
 
 	wg.Wait()

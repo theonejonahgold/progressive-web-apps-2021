@@ -1,22 +1,14 @@
-<!DOCTYPE html>
-<html lang="nl">
-
-{{> partials/head}}
-
-<body>
-  {{> partials/header}}
-  <main>
-    <h3><a href="{{story.uRL}}" target="_blank" rel="noopener norefferer">{{story.title}}</a></h3>
-    <p>{{story.score}} points bij {{story.by}} et {{story.time}}</p>
-    <section>
-      <h3>{{len comments}} Reactions</h3>
-      <ul>
-        {{#each story.comments}}
-        {{> partials/comment}}
-        {{/each}}
-      </ul>
-    </section>
-  </main>
-</body>
-
-</html>
+<main>
+  <h3><a href="{{story.uRL}}" target="_blank" rel="noopener norefferer">{{story.title}}</a></h3>
+  <p>{{story.score}} points bij {{story.by}} et {{story.time}}</p>
+  <section>
+    <h3>{{len comments}} Reactions</h3>
+    {{#if story.comments}}
+    <ul>
+      {{#each story.comments}}
+      {{> partials/comment}}
+      {{/each}}
+    </ul>
+    {{/if}}
+  </section>
+</main>

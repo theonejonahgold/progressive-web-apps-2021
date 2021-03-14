@@ -1,10 +1,8 @@
 package ssr
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"sort"
 	"sync"
 
@@ -14,7 +12,10 @@ import (
 	u "github.com/theonejonahgold/pwa/utils"
 )
 
-func SSR() error {
+func SSR() (context.Context, error) {
+	ctx := context.Background()
+	runSnowpackDevBuilds(ctx)
+
 	engine := handlebars.New("./views", ".hbs")
 	engine.Reload(true)
 
@@ -28,7 +29,7 @@ func SSR() error {
 	app.Get("/story/:id", story)
 	app.Get("*", notFound)
 
-	return app.Listen(":3000")
+	return ctx, app.Listen(":3000")
 }
 
 func index(c *fiber.Ctx) error {
@@ -41,29 +42,18 @@ func index(c *fiber.Ctx) error {
 
 	return c.Render("index", fiber.Map{
 		"stories": stories,
-	})
+	}, "layouts/main")
 }
 
 func story(c *fiber.Ctx) error {
-	fmt.Println("hoi")
 	id := c.Params("id")
-	res, err := http.Get("https://hacker-news.firebaseio.com/v0/item/" + id + ".json")
+	j, err := u.Fetch("https://hacker-news.firebaseio.com/v0/item/" + id + ".json")
 	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	defer res.Body.Close()
-
-	j, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
-	story := m.NewStory()
-	err = json.Unmarshal(j, story)
+	story, err := u.ParseStory(j)
 	if err != nil {
-		fmt.Println(story)
 		return err
 	}
 
@@ -74,12 +64,12 @@ func story(c *fiber.Ctx) error {
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	u.FetchComments(story, &wg)
+	u.FetchComments(story, &wg, 2)
 	wg.Wait()
 
 	return c.Render("story", fiber.Map{
 		"story": story,
-	})
+	}, "layouts/main")
 }
 
 func notFound(c *fiber.Ctx) error {

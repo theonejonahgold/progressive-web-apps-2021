@@ -5,11 +5,13 @@
     <p>
       {{{this.text}}}
     </p>
+    {{#if this.comments}}
     <ul>
       {{#each this.comments}}
       {{> partials/comment}}
       {{/each}}
     </ul>
+    {{/if}}
   </article>
 </li>
 {{/unless}}

@@ -21,7 +21,7 @@ type Comment struct {
 }
 
 func (c *Comment) PopulateComments() {
-	kids := c.GetKids()
+	kids := c.Kids
 	if len(kids) == 0 {
 		return
 	}
@@ -40,7 +40,7 @@ func (c *Comment) PopulateComments() {
 
 	go CloseWhenWGIsDone(cc, &wg)
 
-	var cs []*Comment
+	cs := make([]*Comment, 0, len(kids))
 	for v := range cc {
 		if v.Type == "comment" {
 			cs = append(cs, v)
@@ -59,7 +59,7 @@ func (c *Comment) GetType() string {
 }
 
 func NewComment() *Comment {
-	return new(Comment)
+	return &Comment{}
 }
 
 // CommentMap is a map with comments bound to ids

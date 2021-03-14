@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"sync"
 
@@ -34,11 +37,12 @@ func GetTopStories() ([]*m.Story, error) {
 		close(c)
 	}()
 
-	var stories []*m.Story
+	stories := make([]*m.Story, 0, len(storyIDs))
 	for s := range c {
-		if s.Type == "story" {
-			stories = append(stories, s)
+		if s == nil || s.Type != "story" {
+			continue
 		}
+		stories = append(stories, s)
 	}
 	return stories, nil
 }
@@ -57,19 +61,39 @@ func Fetch(url string) ([]byte, error) {
 	return b, nil
 }
 
-func FetchComments(obj m.HackerNewsObject, wg *sync.WaitGroup) {
+func FetchComments(obj m.HackerNewsObject, wg *sync.WaitGroup, limit int) {
 	defer wg.Done()
 	obj.PopulateComments()
-	switch v := (obj).(type) {
+	switch v := obj.(type) {
 	case *m.Story:
 		for _, c := range v.Comments {
 			wg.Add(1)
-			go FetchComments(c, wg)
+			go fetchComments(c, wg, 2, limit)
 		}
 	case *m.Comment:
 		for _, c := range v.Comments {
 			wg.Add(1)
-			go FetchComments(c, wg)
+			go fetchComments(c, wg, 2, limit)
+		}
+	}
+}
+
+func fetchComments(obj m.HackerNewsObject, wg *sync.WaitGroup, level, limit int) {
+	defer wg.Done()
+	obj.PopulateComments()
+	if limit >= 0 && limit == level {
+		return
+	}
+	switch v := obj.(type) {
+	case *m.Story:
+		for _, c := range v.Comments {
+			wg.Add(1)
+			go fetchComments(c, wg, level+1, limit)
+		}
+	case *m.Comment:
+		for _, c := range v.Comments {
+			wg.Add(1)
+			go fetchComments(c, wg, level+1, limit)
 		}
 	}
 }
@@ -77,32 +101,30 @@ func FetchComments(obj m.HackerNewsObject, wg *sync.WaitGroup) {
 func ParseStory(b []byte) (*m.Story, error) {
 	s := m.NewStory()
 	if err := json.Unmarshal(b, &s); err != nil {
-		return s, err
+		return nil, err
 	}
 	return s, nil
 }
 
-func ParseComment(b []byte) (*m.Comment, error) {
-	c := m.NewComment()
-	if err := json.Unmarshal(b, &c); err != nil {
-		return c, err
-	}
-	return c, nil
-}
-
-func fetchStory(id string, c chan *m.Story, wg *sync.WaitGroup) error {
+func fetchStory(id string, c chan<- *m.Story, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	b, err := Fetch("https://hacker-news.firebaseio.com/v0/item/" + id + ".json")
 	if err != nil {
-		return err
+		return
 	}
 
 	s, err := ParseStory(b)
 	if err != nil {
-		return err
+		return
 	}
 
 	c <- s
-	return nil
+}
+
+func RetrieveSnowpackFilePath() (string, error) {
+	wd, _ := os.Getwd()
+	fp := filepath.Join(wd, "node_modules", ".bin", "snowpack")
+	file, err := exec.LookPath(fp)
+	return file, err
 }
