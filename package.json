@@ -4,7 +4,7 @@
   "description": "Henkernieuws hes de best nieuws voor riel henkers lijk joe en mie.",
   "main": "index.js",
   "scripts": {
-    "build": "pwa build"
+    "build": "pwa build || ./bin/pwa build"
   },
   "repository": {
     "type": "git",
