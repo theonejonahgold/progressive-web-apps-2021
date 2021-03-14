@@ -1,8 +1,19 @@
 # Henkernieuws
 
+[Live link](https://aqueous-beach-16784.herokuapp.com/)
+
 Henkernieuws hes de best nieuws voor riel henkers lijk joe en mie.
 
 Ritten in go en javascript, lijk ee pro.
+
+## Table of contents
+
+- [Getting started](#getting-started)
+  - [Installing the project](#installing-the-project)
+  - [Available commands](#available-commands)
+- [Features](#features)
+- [Wishlist](#wishlist)
+
 
 ## Getting started
 
@@ -13,24 +24,31 @@ This program is built with Go@^1.16. This means that you have to install one of 
 ```sh
 $ git clone https://github.com/theonejonahgold/progressive-web-apps-2021.git pwa
 $ cd pwa
-$ go get && (yarn || npm install)
-$ go build main.go -o henkernieuws
+$ go get && yarn # or "npm i"
+$ go build -o ./bin/pwa main.go
 ```
 
-### Available NPM commands
+With this sequence of commands, you create a `bin` foler with a binary called `pwa` inside of it. While working on Henkernieuws, you only interact with this binary for managing your dev environment.
+
+### Available commands
 
 ```sh
-$ npm run dev || yarn dev     # Runs dev environment for the website
-$ npm run build || yarn build # Compiles the entire website
+$ ./bin/pwa start # Serves the contents of the dist folder, only useful if you've already prerendered the site.
+$ ./bin/pwa build   # Downloads all henkernieuws data, and prerenders the entire site, also running snowpack to build everything.
+$ ./bin/pwa dev   # Runs a Fiber (express-like) server dynamically serving handlebars templates.
 ```
 
-With these commands, the `pwa` file is built which runs a couple of commands on its own as well:
+## Features
 
-```sh
-$ ./pwa ssg   # Downloads all henkernieuws data, and prerenders the entire site.
-$ ./pwa ssr   # Runs a Fiber (express-like) server serving handlebars templates
-$ ./pwa serve # Serves the contents of the dist folder
-```
+- [x] Static file serving
+- [x] Prerendering as build step
+- [x] Separate dynamic dev server
+- [x] Best HackerNews clone to ever exist
+
+### Wishlist
+
+- [ ] Periodic rerendering on production
+- [ ] Making Node.JS unnecessary as a requirement
 
 <!-- In this course we will convert the client side web application previously made Web App From Scratch into a server side rendered application. We also add functionalities based on the Service Worker and turn the application into a Progressive Web App. Ultimately we are going to implement a series of optimisations to improve the performance of the application.  
 
