@@ -22,8 +22,8 @@ type Story struct {
 	Comments    []*Comment `json:"comments"`
 }
 
-func (e *Story) PopulateComments() {
-	kids := e.Kids
+func (s *Story) PopulateComments() {
+	kids := s.Kids
 	if len(kids) == 0 {
 		return
 	}
@@ -49,15 +49,19 @@ func (e *Story) PopulateComments() {
 		}
 	}
 	sort.Sort(CommentsByTime(cs))
-	e.Comments = cs
+	s.Comments = cs
 }
 
-func (e *Story) GetKids() []int {
-	return e.Kids
+func (s *Story) GetComments() []*Comment {
+	return s.Comments
 }
 
-func (e *Story) GetType() string {
-	return e.Type
+func (s *Story) GetKids() []int {
+	return s.Kids
+}
+
+func (s *Story) GetType() string {
+	return s.Type
 }
 
 func NewStory() *Story {

@@ -11,7 +11,7 @@ import (
 )
 
 func prepareData() (m.DataStructure, error) {
-	fmt.Println("Downloading data")
+	fmt.Println("Downloading stories")
 	st, err := u.GetTopStories()
 	if err != nil {
 		return []*m.Story{}, err
@@ -26,24 +26,25 @@ func prepareData() (m.DataStructure, error) {
 		go u.FetchComments(v, &wg, -1)
 	}
 
+	fmt.Println("Downloading comments (this may take a while...)")
 	wg.Wait()
 
-	fmt.Println("Downloading done")
-
-	if err := saveDumpToFile(structure); err != nil {
-		return []*m.Story{}, err
+	fmt.Println("Downloading done!")
+	if err := saveDataToFile(structure); err != nil {
+		fmt.Println("Data saving error:", err)
+		fmt.Println("Continuing anyway")
 	}
 	return structure, nil
 }
 
-func saveDumpToFile(structure m.DataStructure) error {
-	fmt.Println("Saving data")
+func saveDataToFile(structure m.DataStructure) error {
+	fmt.Println("Saving data to file.")
 	j, err := json.Marshal(structure)
 	if err != nil {
 		return err
 	}
 
-	file, err := createFile(filepath.Join("dist", "data-dump.json"))
+	file, err := createFile(filepath.Join("dist", "data.json"))
 	if err != nil {
 		return err
 	}

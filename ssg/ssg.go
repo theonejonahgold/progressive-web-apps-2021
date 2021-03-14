@@ -32,7 +32,7 @@ func SSG() error {
 	if err := executeSnowpackBuild(); err != nil {
 		return err
 	}
-	fmt.Println("Site ready for deployment!")
+	fmt.Println("Done building!")
 	return nil
 }
 

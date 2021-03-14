@@ -50,6 +50,10 @@ func (c *Comment) PopulateComments() {
 	c.Comments = cs
 }
 
+func (c *Comment) GetComments() []*Comment {
+	return c.Comments
+}
+
 func (c *Comment) GetKids() []int {
 	return c.Kids
 }

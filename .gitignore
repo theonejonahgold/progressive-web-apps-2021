@@ -1,7 +1,6 @@
 # General stuff
 .DS_Store
 pwa
-bin
 .vscode
 
 # Node.JS stuff

@@ -1,1 +1,1 @@
-web: ./bin/pwa start
+web: pwa start

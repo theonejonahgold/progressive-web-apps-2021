@@ -29,7 +29,7 @@ func GetTopStories() ([]*m.Story, error) {
 	c := make(chan *m.Story, len(storyIDs))
 	for _, value := range storyIDs {
 		wg.Add(1)
-		go fetchStory(strconv.Itoa(value), c, &wg)
+		go topStoryFetcher(strconv.Itoa(value), c, &wg)
 	}
 
 	go func() {
@@ -63,38 +63,24 @@ func Fetch(url string) ([]byte, error) {
 
 func FetchComments(obj m.HackerNewsObject, wg *sync.WaitGroup, limit int) {
 	defer wg.Done()
+
 	obj.PopulateComments()
-	switch v := obj.(type) {
-	case *m.Story:
-		for _, c := range v.Comments {
-			wg.Add(1)
-			go fetchComments(c, wg, 2, limit)
-		}
-	case *m.Comment:
-		for _, c := range v.Comments {
-			wg.Add(1)
-			go fetchComments(c, wg, 2, limit)
-		}
+	for _, c := range obj.GetComments() {
+		wg.Add(1)
+		go localFetchComments(c, wg, 2, limit)
 	}
 }
 
-func fetchComments(obj m.HackerNewsObject, wg *sync.WaitGroup, level, limit int) {
+func localFetchComments(obj m.HackerNewsObject, wg *sync.WaitGroup, level, limit int) {
 	defer wg.Done()
+
 	obj.PopulateComments()
 	if limit >= 0 && limit == level {
 		return
 	}
-	switch v := obj.(type) {
-	case *m.Story:
-		for _, c := range v.Comments {
-			wg.Add(1)
-			go fetchComments(c, wg, level+1, limit)
-		}
-	case *m.Comment:
-		for _, c := range v.Comments {
-			wg.Add(1)
-			go fetchComments(c, wg, level+1, limit)
-		}
+	for _, c := range obj.GetComments() {
+		wg.Add(1)
+		go localFetchComments(c, wg, level+1, limit)
 	}
 }
 
@@ -106,7 +92,7 @@ func ParseStory(b []byte) (*m.Story, error) {
 	return s, nil
 }
 
-func fetchStory(id string, c chan<- *m.Story, wg *sync.WaitGroup) {
+func topStoryFetcher(id string, c chan<- *m.Story, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	b, err := Fetch("https://hacker-news.firebaseio.com/v0/item/" + id + ".json")
