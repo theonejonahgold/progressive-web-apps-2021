@@ -57,9 +57,10 @@ func startServer(h http.Handler, ctx context.Context) {
 	if port == "" {
 		port = "3000"
 	}
+	fmt.Println(port)
 	srv := &http.Server{
 		Handler:      h,
-		Addr:         "127.0.0.1:" + port,
+		Addr:         ":" + port,
 		ReadTimeout:  20 * time.Second,
 		WriteTimeout: 20 * time.Second,
 	}
