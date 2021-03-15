@@ -11,7 +11,7 @@ module.exports = {
     output: 'stream',
   },
   buildOptions: {
-    out: 'dist/static',
+    out: 'dist/assets',
     watch: process.env.NODE_ENV !== 'production',
     clean: false
   },

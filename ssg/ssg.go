@@ -3,14 +3,13 @@ package ssg
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"sync"
 
-	"github.com/aymerick/raymond"
-	m "github.com/theonejonahgold/pwa/models"
-	u "github.com/theonejonahgold/pwa/utils"
+	"github.com/theonejonahgold/pwa/hackernews/story"
+	"github.com/theonejonahgold/pwa/renderer"
+	"github.com/theonejonahgold/pwa/snowpack"
 )
 
 // GeneratePages generates all pages for static rendering
@@ -19,52 +18,36 @@ func SSG() error {
 	if err != nil {
 		return err
 	}
-	main, err := prepareTemplate()
-	if err != nil {
+	if _, err := renderIndex(data); err != nil {
 		return err
 	}
-	if err := renderIndex(main, data); err != nil {
+	if err := renderStories(data); err != nil {
 		return err
 	}
-	if err := renderStories(main, data); err != nil {
-		return err
-	}
-	if err := executeSnowpackBuild(); err != nil {
+	if err := snowpack.RunBuild(); err != nil {
 		return err
 	}
 	fmt.Println("Done building!")
 	return nil
 }
 
-func renderIndex(lay *raymond.Template, data []*m.Story) error {
+func renderIndex(data []*story.Story) (int, error) {
 	fmt.Println("Rendering Index Page")
-	d, _ := os.Getwd()
-	t, err := raymond.ParseFile(filepath.Join(d, "views", "index.hbs"))
+	r, err := renderer.New("views")
 	if err != nil {
-		return err
+		return 0, err
 	}
-
 	bind := map[string]interface{}{
 		"stories": data,
 	}
-	e, err := t.Exec(bind)
-	if err != nil {
-		return err
-	}
-
-	bind["embed"] = raymond.SafeString(e)
-	r, err := lay.Exec(bind)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return savePage([]byte(r), "index.html")
+	return r.Render(fileSaver{
+		path: "index.html",
+	}, "index.hbs", bind, "layouts/main.hbs")
 }
 
-func renderStories(lay *raymond.Template, data []*m.Story) error {
+func renderStories(data []*story.Story) error {
 	fmt.Println("Rendering Story Pages")
-	d, _ := os.Getwd()
-	t, err := raymond.ParseFile(filepath.Join(d, "views", "story.hbs"))
+	r, err := renderer.New("views")
 	if err != nil {
 		return err
 	}
@@ -72,59 +55,39 @@ func renderStories(lay *raymond.Template, data []*m.Story) error {
 	var wg sync.WaitGroup
 	for _, v := range data {
 		wg.Add(1)
-		go renderStory(lay, t, v, &wg)
+		go renderStory(r, v, &wg)
 	}
 	wg.Wait()
 	return nil
 }
 
-func renderStory(lay *raymond.Template, t *raymond.Template, s *m.Story, wg *sync.WaitGroup) error {
+func renderStory(r renderer.Renderer, s *story.Story, wg *sync.WaitGroup) (int, error) {
 	defer wg.Done()
-
 	bind := map[string]interface{}{
 		"story": s,
 	}
-	e, err := t.Exec(bind)
-	if err != nil {
-		return err
-	}
-
-	bind["embed"] = raymond.SafeString(e)
-	r, err := lay.Exec(bind)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	return savePage([]byte(r), "story/"+strconv.Itoa(s.ID)+"/index.html")
+	return r.Render(fileSaver{
+		path: "story/" + strconv.Itoa(s.ID) + "/index.html",
+	}, "story.hbs", bind, "layouts/main.hbs")
 }
 
-func savePage(t []byte, p string) error {
+type fileSaver struct {
+	path string
+}
+
+func (s fileSaver) Write(data []byte) (n int, err error) {
 	d, _ := os.Getwd()
-	fp := filepath.Join(d, "dist", p)
+	fp := filepath.Join(d, "dist", s.path)
 	f, err := createFile(fp)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	if _, err = f.Write(t); err != nil {
-		return err
+	n, err = f.Write(data)
+	if err != nil {
+		return 0, err
 	}
 	if err = f.Close(); err != nil {
-		return err
+		return 0, err
 	}
-	return err
-}
-
-func executeSnowpackBuild() error {
-	fmt.Println("Running Snowpack Build")
-	file, err := u.RetrieveSnowpackFilePath()
-	if err != nil {
-		return err
-	}
-	cmd := exec.Command(file, "build")
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Env = append(os.Environ(), "NODE_ENV=production")
-	return cmd.Run()
+	return n, nil
 }

@@ -6,27 +6,26 @@ import (
 	"path/filepath"
 	"sync"
 
-	m "github.com/theonejonahgold/pwa/models"
-	u "github.com/theonejonahgold/pwa/utils"
+	hn "github.com/theonejonahgold/pwa/hackernews"
+	"github.com/theonejonahgold/pwa/hackernews/story"
 )
 
-func prepareData() (m.DataStructure, error) {
+func prepareData() (hn.DataStructure, error) {
 	fmt.Println("Downloading stories")
-	st, err := u.GetTopStories()
+	st, err := story.GetTopStories()
 	if err != nil {
-		return []*m.Story{}, err
+		return []*story.Story{}, err
 	}
-	fmt.Println("Stories downloaded:", len(st))
 
-	var structure m.DataStructure = st
+	var structure hn.DataStructure = st
+
+	fmt.Printf("Downloading comments for %v stories (this may take a while...)\n", len(st))
 
 	var wg sync.WaitGroup
 	for _, v := range st {
 		wg.Add(1)
-		go u.FetchComments(v, &wg, -1)
+		go v.PopulateComments(&wg)
 	}
-
-	fmt.Println("Downloading comments (this may take a while...)")
 	wg.Wait()
 
 	fmt.Println("Downloading done!")
@@ -37,7 +36,7 @@ func prepareData() (m.DataStructure, error) {
 	return structure, nil
 }
 
-func saveDataToFile(structure m.DataStructure) error {
+func saveDataToFile(structure hn.DataStructure) error {
 	fmt.Println("Saving data to file.")
 	j, err := json.Marshal(structure)
 	if err != nil {

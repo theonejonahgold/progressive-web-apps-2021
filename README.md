@@ -36,7 +36,7 @@ With this sequence of commands, you create a binary called `pwa` in the project 
 ```sh
 $ ./pwa start # Serves the contents of the dist folder, only useful if you've already prerendered the site.
 $ ./pwa build # Downloads all henkernieuws data, and prerenders the entire site, also running snowpack to build everything.
-$ ./pwa dev   # Runs a Fiber (express-like) server dynamically serving handlebars templates.
+$ ./pwa dev   # Runs a server dynamically serving handlebars templates.
 ```
 
 ## Features

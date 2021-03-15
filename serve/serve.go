@@ -2,11 +2,10 @@ package serve
 
 import (
 	"fmt"
-	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
-
-	"github.com/valyala/fasthttp"
+	"time"
 )
 
 func Serve() error {
@@ -15,26 +14,15 @@ func Serve() error {
 		port = "3000"
 	}
 	fmt.Println("Starting serve on port", port)
-	return fasthttp.ListenAndServe(":"+port, fastHTTPHandler)
-}
-
-func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 	wd, _ := os.Getwd()
-	url := string(ctx.Path())
-	fp := filepath.Join(wd, "dist", url, "index.html")
-	buf, err := ioutil.ReadFile(fp)
-	if err != nil {
-		serveStaticFiles(ctx)
-		return
+	fp := filepath.Join(wd, "dist")
+	r := http.NewServeMux()
+	r.Handle("/", http.FileServer(http.Dir(fp)))
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         "127.0.0.1:" + port,
+		ReadTimeout:  20 * time.Second,
+		WriteTimeout: 20 * time.Second,
 	}
-	ctx.SetStatusCode(fasthttp.StatusOK)
-	ctx.SetContentType("text/html")
-	ctx.SetBodyString(string(buf))
-}
-
-func serveStaticFiles(ctx *fasthttp.RequestCtx) {
-	wd, _ := os.Getwd()
-	url := string(ctx.Path())
-	fp := filepath.Join(wd, "dist", "static", url)
-	ctx.SendFile(fp)
+	return srv.ListenAndServe()
 }

@@ -13,6 +13,8 @@ import (
 )
 
 func main() {
+	fmt.Println(`
+Jonahgold's Henkernieuws`)
 	if len(os.Args) > 1 {
 		arg := os.Args[1]
 		switch arg {
@@ -25,30 +27,28 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			signal.NotifyContext(ctx, syscall.SIGABRT, syscall.SIGTERM, syscall.SIGINT)
+			_, stop := signal.NotifyContext(ctx, syscall.SIGABRT, syscall.SIGTERM, syscall.SIGINT)
+			defer stop()
 		case "start":
-			log.Fatal(serve.Serve())
-		case "help":
-			fallthrough
+			if err := serve.Serve(); err != nil {
+				fmt.Println(err)
+			}
 		default:
 			printHelp()
 		}
-	} else {
-		printHelp()
+		return
 	}
+	printHelp()
 }
 
 func printHelp() {
 	help := `
-JonahGold's Henkernieuws
-
 Available Commands
 
 start - Serves the built static HTML pages
 build - Builds static HTML pages for serving
 dev   - Creates a server that dynamically parses pages on request (and runs snowpack)
 help  - Prints this help message
-
 `
 	fmt.Println(help)
 }

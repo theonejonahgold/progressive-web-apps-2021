@@ -1,4 +1,4 @@
-package models
+package comment
 
 import (
 	"encoding/json"
@@ -28,8 +28,9 @@ var (
 	}
 )
 
-func fetchComment(jc <-chan string, cc chan<- *Comment, wg *sync.WaitGroup) {
+func commentWorker(jc <-chan string, cc chan<- *Comment, wg *sync.WaitGroup) {
 	defer wg.Done()
+
 	for id := range jc {
 		res, err := client.Get("https://hacker-news.firebaseio.com/v0/item/" + id + ".json")
 		if err != nil {
@@ -42,16 +43,25 @@ func fetchComment(jc <-chan string, cc chan<- *Comment, wg *sync.WaitGroup) {
 			continue
 		}
 
-		cm := NewComment()
+		cm := New()
 		err = json.Unmarshal(bytes, cm)
 		if err != nil {
 			continue
 		}
+
 		cc <- cm
 	}
 }
 
-func CloseWhenWGIsDone(c chan *Comment, wg *sync.WaitGroup) {
-	wg.Wait()
-	close(c)
+func Parse(res *http.Response) (*Comment, error) {
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	s := New()
+	if err := json.Unmarshal(b, &s); err != nil {
+		return nil, err
+	}
+	return s, nil
 }

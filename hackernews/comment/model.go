@@ -1,4 +1,4 @@
-package models
+package comment
 
 import (
 	"sort"
@@ -20,7 +20,8 @@ type Comment struct {
 	Comments []*Comment `json:"comments"`
 }
 
-func (c *Comment) PopulateComments() {
+func (c *Comment) PopulateComments(wg *sync.WaitGroup) {
+	defer wg.Done()
 	kids := c.Kids
 	if len(kids) == 0 {
 		return
@@ -30,16 +31,16 @@ func (c *Comment) PopulateComments() {
 		jc <- strconv.Itoa(v)
 	}
 	close(jc)
-
 	cc := make(chan *Comment, len(kids))
-	var wg sync.WaitGroup
+	var cwg sync.WaitGroup
 	for i := 0; i < 2; i++ {
-		wg.Add(1)
-		go fetchComment(jc, cc, &wg)
+		cwg.Add(1)
+		go commentWorker(jc, cc, &cwg)
 	}
-
-	go CloseWhenWGIsDone(cc, &wg)
-
+	go func() {
+		cwg.Wait()
+		close(cc)
+	}()
 	cs := make([]*Comment, 0, len(kids))
 	for v := range cc {
 		if v.Type == "comment" {
@@ -48,6 +49,10 @@ func (c *Comment) PopulateComments() {
 	}
 	sort.Sort(CommentsByTime(cs))
 	c.Comments = cs
+	for _, v := range cs {
+		wg.Add(1)
+		go v.PopulateComments(wg)
+	}
 }
 
 func (c *Comment) GetComments() []*Comment {
@@ -62,15 +67,6 @@ func (c *Comment) GetType() string {
 	return c.Type
 }
 
-func NewComment() *Comment {
+func New() *Comment {
 	return &Comment{}
 }
-
-// CommentMap is a map with comments bound to ids
-type CommentMap map[int][]Comment
-
-type CommentsByTime []*Comment
-
-func (a CommentsByTime) Len() int           { return len(a) }
-func (a CommentsByTime) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a CommentsByTime) Less(i, j int) bool { return a[i].Time > a[j].Time }
