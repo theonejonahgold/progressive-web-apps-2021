@@ -1,3 +1,6 @@
+declare let self: ServiceWorkerGlobalScope
+export {}
+
 const CACHE_NAME = 'henkerkesh'
 const CACHE_URLS = ['/', '/offline/', '/styles/main.css', '/scripts/main.js']
 
@@ -38,7 +41,7 @@ self.addEventListener('fetch', e => {
         cache.put(e.request, res.clone())
         return res
       } catch {
-        return await cache.match('/offline/')
+        return (await cache.match('/offline/')) as Response
       }
     })(),
   )
