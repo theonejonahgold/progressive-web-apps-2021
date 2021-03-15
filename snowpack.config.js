@@ -22,10 +22,8 @@ module.exports = {
     splitting: true,
     treeshake: true,
     target: 'es2020',
-    entrypoints: ({ files }) => {
-      console.log(files)
-      return files.filter(file => file.includes('index.html'))
-    },
+    entrypoints: ({ files }) =>
+      files.filter(file => file.includes('index.html')),
     manifest: true,
     minify: true,
   },

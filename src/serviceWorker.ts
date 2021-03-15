@@ -1,9 +1,10 @@
 declare let self: ServiceWorkerGlobalScope
 export {}
 
-const CACHE_NAME = `henkerkesh-${
-  (import.meta as Record<string, any>).env.SNOWPACK_PUBLIC_SALT
-}`
+// const CACHE_NAME = `henkerkesh-${
+//   (import.meta as Record<string, any>).env.SNOWPACK_PUBLIC_SALT
+// }`
+const CACHE_NAME = 'henkerkesh'
 const CACHE_URLS = ['/', '/offline/', '/styles/main.css', '/scripts/main.js']
 
 self.addEventListener('install', e => {
