@@ -1,3 +1,5 @@
+/// <reference lib="DOM" />
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker

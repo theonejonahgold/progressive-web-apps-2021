@@ -1,5 +1,4 @@
-declare let self: ServiceWorkerGlobalScope
-export {}
+/// <reference lib="webworker" />
 
 // const CACHE_NAME = `henkerkesh-${
 //   (import.meta as Record<string, any>).env.SNOWPACK_PUBLIC_SALT
@@ -7,15 +6,18 @@ export {}
 const CACHE_NAME = 'henkerkesh'
 const CACHE_URLS = ['/', '/offline/', '/styles/main.css', '/scripts/main.js']
 
-self.addEventListener('install', e => {
+// Solution for type problems from: https://github.com/Microsoft/TypeScript/issues/11781#issuecomment-785350836
+const sw: ServiceWorkerGlobalScope & typeof globalThis = self as any
+
+sw.addEventListener('install', e => {
   e.waitUntil(async () => {
     const cache = await caches.open(CACHE_NAME)
     await cache.addAll(CACHE_URLS)
   })
 })
 
-self.addEventListener('activate', e => {
-  self.clients.claim()
+sw.addEventListener('activate', e => {
+  sw.clients.claim()
   e.waitUntil(
     (async () => {
       const keys = await caches.keys()
@@ -28,7 +30,7 @@ self.addEventListener('activate', e => {
   )
 })
 
-self.addEventListener('fetch', e => {
+sw.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') {
     return
   }
