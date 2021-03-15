@@ -28,11 +28,10 @@ func SSR() (context.Context, error) {
 	}
 	fmt.Println("Starting serve on port", port)
 
-	wd, _ := os.Getwd()
-	fp := filepath.Join(wd, "dist", "assets")
 	r := http.NewServeMux()
+	r.HandleFunc("/offline", offlineHandler)
+	r.HandleFunc("/all-stories", allStoriesHandler)
 	r.HandleFunc("/story/", storyHandler)
-	r.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir(fp))))
 	r.HandleFunc("/", indexHandler)
 	srv := &http.Server{
 		Handler:      r,
@@ -45,7 +44,9 @@ func SSR() (context.Context, error) {
 
 func indexHandler(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path != "/" {
-		notFoundHandler(w, req)
+		wd, _ := os.Getwd()
+		fp := filepath.Join(wd, "dist")
+		http.FileServer(http.Dir(fp)).ServeHTTP(w, req)
 		return
 	}
 	stories, err := story.GetTopStories()
@@ -57,7 +58,7 @@ func indexHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		return
 	}
-	w.Header().Add("Content-Type", "text/html")
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	r.Render(w, "index.hbs", map[string]interface{}{
 		"stories": stories,
 	}, "layouts/main.hbs")
@@ -93,7 +94,7 @@ func storyHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		return
 	}
-	w.Header().Add("Content-Type", "text/html")
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	r.Render(w, "story.hbs", map[string]interface{}{
 		"story": story,
@@ -101,7 +102,23 @@ func storyHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
-	w.Header().Add("Content-Type", "text/plain")
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(404)
 	w.Write([]byte("Kon die stoorie niet vinden. Probeer eens een andere!"))
+}
+
+func allStoriesHandler(w http.ResponseWriter, req *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+	w.Write([]byte("No content"))
+}
+
+func offlineHandler(w http.ResponseWriter, req *http.Request) {
+	r, err := renderer.New("views")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Internal Server Error"))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	r.Render(w, "offline.hbs", map[string]interface{}{}, "layouts/main.hbs")
 }

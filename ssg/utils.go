@@ -11,3 +11,9 @@ func createFile(path string) (*os.File, error) {
 	}
 	return os.Create(path)
 }
+
+func clearDistFolder() error {
+	d, _ := os.Getwd()
+	fp := filepath.Join(d, "dist")
+	return os.RemoveAll(fp)
+}

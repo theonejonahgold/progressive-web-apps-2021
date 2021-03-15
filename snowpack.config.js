@@ -1,21 +1,21 @@
 /* eslint-env node */
 
-
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
   mount: {
     src: { url: '/' },
+    public: { url: '/', static: true },
   },
   plugins: ['@snowpack/plugin-typescript'],
   devOptions: {
     output: 'stream',
   },
   buildOptions: {
-    out: 'dist/assets',
+    out: 'dist',
     watch: process.env.NODE_ENV !== 'production',
-    clean: false
+    clean: false,
   },
-  packageOptions: { source: 'remote', types: true, },
+  packageOptions: { source: 'remote', types: true },
   // optimize: {
   //   bundle: true,
   //   splitting: true,

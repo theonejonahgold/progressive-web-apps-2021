@@ -14,6 +14,9 @@ import (
 
 // GeneratePages generates all pages for static rendering
 func SSG() error {
+	if err := clearDistFolder(); err != nil {
+		return err
+	}
 	data, err := prepareData()
 	if err != nil {
 		return err
@@ -22,6 +25,9 @@ func SSG() error {
 		return err
 	}
 	if err := renderStories(data); err != nil {
+		return err
+	}
+	if _, err := renderOffline(); err != nil {
 		return err
 	}
 	if err := snowpack.RunBuild(); err != nil {
@@ -73,6 +79,16 @@ func renderStory(r renderer.Renderer, s *story.Story, wg *sync.WaitGroup) (int, 
 
 type fileSaver struct {
 	path string
+}
+
+func renderOffline() (int, error) {
+	r, err := renderer.New("views")
+	if err != nil {
+		return 0, err
+	}
+	return r.Render(fileSaver{
+		path: "offline/index.html",
+	}, "offline.hbs", map[string]interface{}{}, "layouts/main.hbs")
 }
 
 func (s fileSaver) Write(data []byte) (n int, err error) {

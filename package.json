@@ -2,7 +2,6 @@
   "name": "pwa",
   "version": "1.0.0",
   "description": "Henkernieuws hes de best nieuws voor riel henkers lijk joe en mie.",
-  "main": "index.js",
   "scripts": {
     "build": "pwa build || ./bin/pwa build"
   },
@@ -18,7 +17,7 @@
   },
   "homepage": "https://github.com/theonejonahgold/progressive-web-apps-2021#readme",
   "devDependencies": {
-    "@snowpack/plugin-build-script": "^2.1.0",
+    "@snowpack/plugin-run-script": "^2.3.0",
     "@snowpack/plugin-typescript": "^1.2.1",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
