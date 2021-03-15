@@ -44,9 +44,7 @@ func index(data []*s.Story) (int, error) {
 	bind := map[string]interface{}{
 		"stories": data,
 	}
-	return r.Render(pageWriter{
-		path: "index.html",
-	}, "index.hbs", bind, "layouts/main.hbs")
+	return r.Render(pageWriter{"index.html"}, "index.hbs", bind, "layouts/main.hbs")
 }
 
 func stories(data []*s.Story) error {
@@ -66,15 +64,12 @@ func storyPage(s *s.Story, wg *sync.WaitGroup) (int, error) {
 	bind := map[string]interface{}{
 		"story": s,
 	}
-	return r.Render(pageWriter{
-		path: "story/" + strconv.Itoa(s.ID) + "/index.html",
-	}, "story.hbs", bind, "layouts/main.hbs")
+	p := "story/" + strconv.Itoa(s.ID) + "/index.html"
+	return r.Render(pageWriter{p}, "story.hbs", bind, "layouts/main.hbs")
 }
 
 func offline() (int, error) {
-	return r.Render(pageWriter{
-		path: "offline/index.html",
-	}, "offline.hbs", map[string]interface{}{}, "layouts/main.hbs")
+	return r.Render(pageWriter{"offline/index.html"}, "offline.hbs", map[string]interface{}{}, "layouts/main.hbs")
 }
 
 type pageWriter struct {

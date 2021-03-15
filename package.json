@@ -16,16 +16,18 @@
     "url": "https://github.com/theonejonahgold/progressive-web-apps-2021/issues"
   },
   "homepage": "https://github.com/theonejonahgold/progressive-web-apps-2021#readme",
-  "devDependencies": {
+  "dependencies": {
     "@snowpack/plugin-run-script": "^2.3.0",
     "@snowpack/plugin-typescript": "^1.2.1",
+    "prettier": "^2.2.1",
+    "snowpack": "^3.0.13",
+    "typescript": "^4.2.3"
+  },
+  "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
     "eslint": "^7.21.0",
     "eslint-config-prettier": "^8.1.0",
-    "eslint-plugin-prettier": "^3.3.1",
-    "prettier": "^2.2.1",
-    "snowpack": "^3.0.13",
-    "typescript": "^4.2.3"
+    "eslint-plugin-prettier": "^3.3.1"
   }
 }
