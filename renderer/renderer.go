@@ -39,7 +39,7 @@ func (hr *HandlebarsRenderer) Render(output io.Writer, fp string, data map[strin
 	return output.Write([]byte(render))
 }
 
-func New(basePath string) (r Renderer, err error) {
+func New(basePath string) (r Renderer) {
 	d, _ := os.Getwd()
 	partialP := filepath.Join(d, basePath, "partials")
 	filepath.Walk(partialP, func(path string, info fs.FileInfo, err error) error {
@@ -59,7 +59,7 @@ func New(basePath string) (r Renderer, err error) {
 	r = &HandlebarsRenderer{
 		basePath: basePath,
 	}
-	return r, nil
+	return r
 }
 
 func recoverFromPartialRegisteredError() {

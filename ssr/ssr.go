@@ -2,44 +2,30 @@ package ssr
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/theonejonahgold/pwa/hackernews/story"
 	"github.com/theonejonahgold/pwa/renderer"
 	"github.com/theonejonahgold/pwa/snowpack"
 )
 
-func SSR() (context.Context, error) {
-	ctx := context.Background()
+var r = renderer.New("views")
+
+func New(ctx context.Context) (http.Handler, error) {
 	err := snowpack.RunDev(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
-	fmt.Println("Starting serve on port", port)
-
 	r := http.NewServeMux()
 	r.HandleFunc("/offline", offlineHandler)
-	r.HandleFunc("/all-stories", allStoriesHandler)
 	r.HandleFunc("/story/", storyHandler)
 	r.HandleFunc("/", indexHandler)
-	srv := &http.Server{
-		Handler:      r,
-		Addr:         "127.0.0.1:" + port,
-		ReadTimeout:  20 * time.Second,
-		WriteTimeout: 20 * time.Second,
-	}
-	return ctx, srv.ListenAndServe()
+	r.HandleFunc("/serviceWorker.js", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNotFound) })
+	return r, nil
 }
 
 func indexHandler(w http.ResponseWriter, req *http.Request) {
@@ -54,7 +40,7 @@ func indexHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	sort.Sort(story.ByScore(stories))
-	r, err := renderer.New("views")
+
 	if err != nil {
 		return
 	}
@@ -90,7 +76,6 @@ func storyHandler(w http.ResponseWriter, req *http.Request) {
 	go story.PopulateComments(&wg)
 	wg.Wait()
 
-	r, err := renderer.New("views")
 	if err != nil {
 		return
 	}
@@ -101,24 +86,13 @@ func storyHandler(w http.ResponseWriter, req *http.Request) {
 	}, "layouts/main.hbs")
 }
 
+func offlineHandler(w http.ResponseWriter, req *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	r.Render(w, "offline.hbs", map[string]interface{}{}, "layouts/main.hbs")
+}
+
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(404)
 	w.Write([]byte("Kon die stoorie niet vinden. Probeer eens een andere!"))
-}
-
-func allStoriesHandler(w http.ResponseWriter, req *http.Request) {
-	w.WriteHeader(http.StatusNoContent)
-	w.Write([]byte("No content"))
-}
-
-func offlineHandler(w http.ResponseWriter, req *http.Request) {
-	r, err := renderer.New("views")
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Server Error"))
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	r.Render(w, "offline.hbs", map[string]interface{}{}, "layouts/main.hbs")
 }

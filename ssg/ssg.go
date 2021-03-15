@@ -7,13 +7,15 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/theonejonahgold/pwa/hackernews/story"
+	s "github.com/theonejonahgold/pwa/hackernews/story"
 	"github.com/theonejonahgold/pwa/renderer"
 	"github.com/theonejonahgold/pwa/snowpack"
 )
 
-// GeneratePages generates all pages for static rendering
-func SSG() error {
+var r = renderer.New("views")
+
+// Build generates all pages for static rendering
+func Build() error {
 	if err := clearDistFolder(); err != nil {
 		return err
 	}
@@ -21,13 +23,13 @@ func SSG() error {
 	if err != nil {
 		return err
 	}
-	if _, err := renderIndex(data); err != nil {
+	if _, err := index(data); err != nil {
 		return err
 	}
-	if err := renderStories(data); err != nil {
+	if err := stories(data); err != nil {
 		return err
 	}
-	if _, err := renderOffline(); err != nil {
+	if _, err := offline(); err != nil {
 		return err
 	}
 	if err := snowpack.RunBuild(); err != nil {
@@ -37,61 +39,49 @@ func SSG() error {
 	return nil
 }
 
-func renderIndex(data []*story.Story) (int, error) {
+func index(data []*s.Story) (int, error) {
 	fmt.Println("Rendering Index Page")
-	r, err := renderer.New("views")
-	if err != nil {
-		return 0, err
-	}
 	bind := map[string]interface{}{
 		"stories": data,
 	}
-	return r.Render(fileSaver{
+	return r.Render(pageWriter{
 		path: "index.html",
 	}, "index.hbs", bind, "layouts/main.hbs")
 }
 
-func renderStories(data []*story.Story) error {
+func stories(data []*s.Story) error {
 	fmt.Println("Rendering Story Pages")
-	r, err := renderer.New("views")
-	if err != nil {
-		return err
-	}
 
 	var wg sync.WaitGroup
 	for _, v := range data {
 		wg.Add(1)
-		go renderStory(r, v, &wg)
+		go storyPage(v, &wg)
 	}
 	wg.Wait()
 	return nil
 }
 
-func renderStory(r renderer.Renderer, s *story.Story, wg *sync.WaitGroup) (int, error) {
+func storyPage(s *s.Story, wg *sync.WaitGroup) (int, error) {
 	defer wg.Done()
 	bind := map[string]interface{}{
 		"story": s,
 	}
-	return r.Render(fileSaver{
+	return r.Render(pageWriter{
 		path: "story/" + strconv.Itoa(s.ID) + "/index.html",
 	}, "story.hbs", bind, "layouts/main.hbs")
 }
 
-type fileSaver struct {
-	path string
-}
-
-func renderOffline() (int, error) {
-	r, err := renderer.New("views")
-	if err != nil {
-		return 0, err
-	}
-	return r.Render(fileSaver{
+func offline() (int, error) {
+	return r.Render(pageWriter{
 		path: "offline/index.html",
 	}, "offline.hbs", map[string]interface{}{}, "layouts/main.hbs")
 }
 
-func (s fileSaver) Write(data []byte) (n int, err error) {
+type pageWriter struct {
+	path string
+}
+
+func (s pageWriter) Write(data []byte) (n int, err error) {
 	d, _ := os.Getwd()
 	fp := filepath.Join(d, "dist", s.path)
 	f, err := createFile(fp)
