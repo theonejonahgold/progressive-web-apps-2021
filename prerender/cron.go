@@ -11,14 +11,14 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// ScheduleBuild schedules the build task every full hour.
+// ScheduleBuild schedules the build task 5 minutes to every hour.
 func ScheduleBuild() error {
 	log.Println("Starting build scheduler...")
 	ctx, stop := context.WithCancel(context.Background())
 	go gracefullyShutDownOnSignal(stop)
 
 	c := cron.New()
-	_, err := c.AddFunc("* * * * *", func() { Build() })
+	_, err := c.AddFunc("55 * * * *", func() { Build() })
 	if err != nil {
 		return err
 	}

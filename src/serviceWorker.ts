@@ -5,13 +5,17 @@
 // }`
 const CACHE_NAME = 'henkerkesh'
 const CACHE_URLS = ['/', '/offline/', '/styles/main.css', '/scripts/main.js']
+let cacheName = CACHE_NAME
 
 // Solution for type problems from: https://github.com/Microsoft/TypeScript/issues/11781#issuecomment-785350836
 const sw: ServiceWorkerGlobalScope & typeof globalThis = self as any
 
 sw.addEventListener('install', e => {
   e.waitUntil(async () => {
-    const cache = await caches.open(CACHE_NAME)
+    const res = await fetch('/version')
+    const version = await res.text()
+    cacheName = `${CACHE_NAME}-${version}`
+    const cache = await caches.open(cacheName)
     await cache.addAll(CACHE_URLS)
   })
 })
@@ -20,11 +24,12 @@ sw.addEventListener('activate', e => {
   sw.clients.claim()
   e.waitUntil(
     (async () => {
+      const res = await fetch('/version')
+      const version = await res.text()
+      cacheName = `${CACHE_NAME}-${version}`
       const keys = await caches.keys()
       await Promise.all(
-        keys.map(key => {
-          key !== CACHE_NAME && caches.delete(key)
-        }),
+        keys.filter(key => key !== cacheName).map(key => caches.delete(key)),
       )
     })(),
   )
@@ -40,7 +45,7 @@ sw.addEventListener('fetch', e => {
         ignoreSearch: true,
       })
       if (cacheRes) return cacheRes
-      const cache = await caches.open(CACHE_NAME)
+      const cache = await caches.open(cacheName)
       try {
         const res = await fetch(e.request)
         cache.put(e.request, res.clone())
