@@ -1,20 +1,20 @@
-package ssg
+package prerender
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 
-	s "github.com/theonejonahgold/pwa/hackernews/story"
-	"github.com/theonejonahgold/pwa/renderer"
+	hn "github.com/theonejonahgold/pwa/hackernews"
+	"github.com/theonejonahgold/pwa/renderer/handlebars"
 	"github.com/theonejonahgold/pwa/snowpack"
 )
 
-var r = renderer.New("views")
+var r = handlebars.NewRenderer("views")
 
-// Build generates all pages for static rendering
+// Build builds the entire website
 func Build() error {
 	if err := clearDistFolder(); err != nil {
 		return err
@@ -35,20 +35,20 @@ func Build() error {
 	if err := snowpack.RunBuild(); err != nil {
 		return err
 	}
-	fmt.Println("Done building!")
+	log.Println("Done building!")
 	return nil
 }
 
-func index(data []*s.Story) (int, error) {
-	fmt.Println("Rendering Index Page")
+func index(data []hn.HackerNewsObject) (int, error) {
+	log.Println("Rendering index page")
 	bind := map[string]interface{}{
 		"stories": data,
 	}
 	return r.Render(pageWriter{"index.html"}, "index.hbs", bind, "layouts/main.hbs")
 }
 
-func stories(data []*s.Story) error {
-	fmt.Println("Rendering Story Pages")
+func stories(data []hn.HackerNewsObject) error {
+	log.Println("Rendering story pages")
 
 	var wg sync.WaitGroup
 	for _, v := range data {
@@ -59,12 +59,12 @@ func stories(data []*s.Story) error {
 	return nil
 }
 
-func storyPage(s *s.Story, wg *sync.WaitGroup) (int, error) {
+func storyPage(s hn.HackerNewsObject, wg *sync.WaitGroup) (int, error) {
 	defer wg.Done()
 	bind := map[string]interface{}{
 		"story": s,
 	}
-	p := "story/" + strconv.Itoa(s.ID) + "/index.html"
+	p := "story/" + strconv.Itoa(s.GetID()) + "/index.html"
 	return r.Render(pageWriter{p}, "story.hbs", bind, "layouts/main.hbs")
 }
 

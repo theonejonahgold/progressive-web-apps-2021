@@ -1,4 +1,4 @@
-package serve
+package static
 
 import (
 	"net/http"
@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 )
 
-func New() (http.Handler, error) {
+// New creates a new http handler for static file serving
+func New() http.Handler {
 	wd, _ := os.Getwd()
 	fp := filepath.Join(wd, "dist")
 	r := http.NewServeMux()
 	r.Handle("/", http.FileServer(http.Dir(fp)))
-	return r, nil
+	return r
 }

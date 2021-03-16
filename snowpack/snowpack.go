@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// Run builds runs a single Snowpack build
 func RunBuild() error {
 	file, err := retrieveSnowpackFilePath()
 	if err != nil {
@@ -20,6 +21,7 @@ func RunBuild() error {
 	return cmd.Run()
 }
 
+// RunDev starts the Snowpack build watcher
 func RunDev(ctx context.Context) error {
 	file, err := retrieveSnowpackFilePath()
 	if err != nil {

@@ -4,20 +4,22 @@ import (
 	"sort"
 	"strconv"
 	"sync"
+
+	hn "github.com/theonejonahgold/pwa/hackernews"
 )
 
 // Comment - A Hacker News comment struct
 type Comment struct {
-	ID       int        `json:"id"`
-	By       string     `json:"by"`
-	Type     string     `json:"type"`
-	Time     int        `json:"time"`
-	Parent   int        `json:"parent"`
-	Text     string     `json:"text"`
-	Kids     []int      `json:"kids"`
-	Deleted  bool       `json:"deleted"`
-	Dead     bool       `json:"dead"`
-	Comments []*Comment `json:"comments"`
+	ID       int                   `json:"id"`
+	By       string                `json:"by"`
+	Type     string                `json:"type"`
+	Time     int                   `json:"time"`
+	Parent   int                   `json:"parent"`
+	Text     string                `json:"text"`
+	Kids     []int                 `json:"kids"`
+	Deleted  bool                  `json:"deleted"`
+	Dead     bool                  `json:"dead"`
+	Comments []hn.HackerNewsObject `json:"comments"`
 }
 
 func (c *Comment) PopulateComments(wg *sync.WaitGroup) {
@@ -31,9 +33,9 @@ func (c *Comment) PopulateComments(wg *sync.WaitGroup) {
 		jc <- strconv.Itoa(v)
 	}
 	close(jc)
-	cc := make(chan *Comment, len(kids))
+	cc := make(chan hn.HackerNewsObject, len(kids))
 	var cwg sync.WaitGroup
-	for i := 0; i < 2; i++ {
+	for i := 0; i < len(kids); i++ {
 		cwg.Add(1)
 		go commentWorker(jc, cc, &cwg)
 	}
@@ -41,13 +43,13 @@ func (c *Comment) PopulateComments(wg *sync.WaitGroup) {
 		cwg.Wait()
 		close(cc)
 	}()
-	cs := make([]*Comment, 0, len(kids))
+	cs := make([]hn.HackerNewsObject, 0, len(kids))
 	for v := range cc {
-		if v.Type == "comment" {
+		if v.GetType() == "comment" {
 			cs = append(cs, v)
 		}
 	}
-	sort.Sort(CommentsByTime(cs))
+	sort.Sort(hn.ByTime(cs))
 	c.Comments = cs
 	for _, v := range cs {
 		wg.Add(1)
@@ -55,18 +57,26 @@ func (c *Comment) PopulateComments(wg *sync.WaitGroup) {
 	}
 }
 
-func (c *Comment) GetComments() []*Comment {
-	return c.Comments
+func (c *Comment) GetType() string {
+	return c.Type
 }
 
 func (c *Comment) GetKids() []int {
 	return c.Kids
 }
 
-func (c *Comment) GetType() string {
-	return c.Type
+func (c *Comment) GetTime() int {
+	return c.Time
 }
 
-func New() *Comment {
+func (c *Comment) GetScore() int {
+	return 0
+}
+
+func (c *Comment) GetID() int {
+	return c.ID
+}
+
+func New() hn.HackerNewsObject {
 	return &Comment{}
 }

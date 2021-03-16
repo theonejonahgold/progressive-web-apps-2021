@@ -1,6 +1,7 @@
-package ssg
+package prerender
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -13,6 +14,7 @@ func createFile(path string) (*os.File, error) {
 }
 
 func clearDistFolder() error {
+	log.Println("Clearing dist folder")
 	d, _ := os.Getwd()
 	fp := filepath.Join(d, "dist")
 	return os.RemoveAll(fp)

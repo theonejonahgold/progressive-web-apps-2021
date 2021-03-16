@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
-	"github.com/theonejonahgold/pwa/serve"
-	"github.com/theonejonahgold/pwa/ssg"
-	"github.com/theonejonahgold/pwa/ssr"
+	"github.com/theonejonahgold/pwa/prerender"
+	"github.com/theonejonahgold/pwa/server"
+	"github.com/theonejonahgold/pwa/server/ssr"
+	"github.com/theonejonahgold/pwa/server/static"
 )
 
 func main() {
@@ -23,60 +20,18 @@ func main() {
 	arg := os.Args[1]
 	switch arg {
 	case "build":
-		log.Println("Building...")
-		if err := ssg.Build(); err != nil {
+		if err := prerender.Build(); err != nil {
 			log.Fatal(err)
 		}
 	case "dev":
 		ctx := context.Background()
-		log.Println("Running dev server...")
-		h, err := ssr.New(ctx)
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-		startServer(h, ctx)
+		server.RunContext(ssr.New(ctx), ctx)
 	case "start":
-		ctx := context.Background()
-		log.Println("Serving files...")
-		h, err := serve.New()
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-		startServer(h, ctx)
+		server.Run(static.New())
 	case "build-cron":
-		if err := ssg.ScheduleBuild(); err != nil {
+		if err := prerender.ScheduleBuild(); err != nil {
 			log.Fatal(err)
 		}
-	}
-}
-
-func startServer(h http.Handler, ctx context.Context) {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
-	fmt.Println(port)
-	srv := &http.Server{
-		Handler:      h,
-		Addr:         ":" + port,
-		ReadTimeout:  20 * time.Second,
-		WriteTimeout: 20 * time.Second,
-	}
-	go gracefullyShutDownServerOnSignal(srv, ctx)
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		log.Fatalf("Unable to to start server: %v", err)
-	}
-}
-
-func gracefullyShutDownServerOnSignal(server *http.Server, ctx context.Context) {
-	exit := make(chan os.Signal, 1)
-	signal.Notify(exit, syscall.SIGTERM, syscall.SIGABRT, syscall.SIGINT)
-	<-exit
-	fmt.Println("Shutting down...")
-	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("Unable to shut down server: %v", err)
 	}
 }
 

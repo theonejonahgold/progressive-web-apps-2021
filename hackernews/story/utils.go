@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/theonejonahgold/pwa/hackernews"
 	"github.com/theonejonahgold/pwa/hackernews/comment"
 )
 
@@ -32,7 +33,7 @@ var (
 )
 
 // GetTopStories gets 50 stories from the hackernews top stories api.
-func GetTopStories() ([]*Story, error) {
+func GetTopStories() ([]hackernews.HackerNewsObject, error) {
 	res, err := client.Get("https://hacker-news.firebaseio.com/v0/topstories.json")
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func GetTopStories() ([]*Story, error) {
 	}
 
 	var wg sync.WaitGroup
-	c := make(chan *Story, len(storyIDs))
+	c := make(chan hackernews.HackerNewsObject, len(storyIDs))
 	for _, value := range storyIDs {
 		wg.Add(1)
 		go storyWorker(strconv.Itoa(value), c, &wg)
@@ -61,9 +62,9 @@ func GetTopStories() ([]*Story, error) {
 		close(c)
 	}()
 
-	stories := make([]*Story, 0, len(storyIDs))
+	stories := make([]hackernews.HackerNewsObject, 0, len(storyIDs))
 	for s := range c {
-		if s == nil || s.Type != "story" {
+		if s == nil || s.GetType() != "story" {
 			continue
 		}
 		stories = append(stories, s)
@@ -71,7 +72,7 @@ func GetTopStories() ([]*Story, error) {
 	return stories, nil
 }
 
-func storyWorker(id string, c chan<- *Story, wg *sync.WaitGroup) {
+func storyWorker(id string, c chan<- hackernews.HackerNewsObject, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	b, err := client.Get("https://hacker-news.firebaseio.com/v0/item/" + id + ".json")
@@ -87,7 +88,7 @@ func storyWorker(id string, c chan<- *Story, wg *sync.WaitGroup) {
 	c <- s
 }
 
-func commentWorker(jc <-chan string, cc chan<- *comment.Comment, wg *sync.WaitGroup) {
+func commentWorker(jc <-chan string, cc chan<- hackernews.HackerNewsObject, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for id := range jc {
@@ -105,7 +106,7 @@ func commentWorker(jc <-chan string, cc chan<- *comment.Comment, wg *sync.WaitGr
 	}
 }
 
-func Parse(res *http.Response) (*Story, error) {
+func Parse(res *http.Response) (hackernews.HackerNewsObject, error) {
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err

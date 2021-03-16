@@ -2,30 +2,33 @@ package ssr
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"sync"
 
+	hn "github.com/theonejonahgold/pwa/hackernews"
 	"github.com/theonejonahgold/pwa/hackernews/story"
-	"github.com/theonejonahgold/pwa/renderer"
+	"github.com/theonejonahgold/pwa/renderer/handlebars"
 	"github.com/theonejonahgold/pwa/snowpack"
 )
 
-var r = renderer.New("views")
+var r = handlebars.NewRenderer("views")
 
-func New(ctx context.Context) (http.Handler, error) {
+// New creates a new http handler for server side rendering
+func New(ctx context.Context) http.Handler {
 	err := snowpack.RunDev(ctx)
 	if err != nil {
-		return nil, err
+		panic(fmt.Errorf("something went wrong while trying to run snowpack: %v", err))
 	}
 	r := http.NewServeMux()
 	r.HandleFunc("/offline", offlineHandler)
 	r.HandleFunc("/story/", storyHandler)
 	r.HandleFunc("/", indexHandler)
 	r.HandleFunc("/serviceWorker.js", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNotFound) })
-	return r, nil
+	return r
 }
 
 func indexHandler(w http.ResponseWriter, req *http.Request) {
@@ -39,7 +42,7 @@ func indexHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		return
 	}
-	sort.Sort(story.ByScore(stories))
+	sort.Sort(hn.ByScore(stories))
 
 	if err != nil {
 		return
@@ -61,19 +64,19 @@ func storyHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	story, err := story.Parse(res)
+	obj, err := story.Parse(res)
 	if err != nil {
 		return
 	}
 
-	if story.Type != "story" {
+	if obj.GetType() != "story" {
 		notFoundHandler(w, req)
 		return
 	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go story.PopulateComments(&wg)
+	go obj.PopulateComments(&wg)
 	wg.Wait()
 
 	if err != nil {
@@ -82,7 +85,7 @@ func storyHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	r.Render(w, "story.hbs", map[string]interface{}{
-		"story": story,
+		"story": obj,
 	}, "layouts/main.hbs")
 }
 

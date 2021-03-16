@@ -5,23 +5,23 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/theonejonahgold/pwa/hackernews/comment"
+	hn "github.com/theonejonahgold/pwa/hackernews"
 )
 
 // Story is a data object storing a story
 type Story struct {
-	ID          int                `json:"id"`
-	By          string             `json:"by"`
-	Descendants int                `json:"descendants"`
-	Kids        []int              `json:"kids"`
-	Score       int                `json:"score"`
-	Time        int                `json:"time"`
-	Title       string             `json:"title"`
-	URL         string             `json:"url"`
-	Type        string             `json:"type"`
-	Deleted     bool               `json:"deleted"`
-	Dead        bool               `json:"dead"`
-	Comments    []*comment.Comment `json:"comments"`
+	ID          int                   `json:"id"`
+	By          string                `json:"by"`
+	Descendants int                   `json:"descendants"`
+	Kids        []int                 `json:"kids"`
+	Score       int                   `json:"score"`
+	Time        int                   `json:"time"`
+	Title       string                `json:"title"`
+	URL         string                `json:"url"`
+	Type        string                `json:"type"`
+	Deleted     bool                  `json:"deleted"`
+	Dead        bool                  `json:"dead"`
+	Comments    []hn.HackerNewsObject `json:"comments"`
 }
 
 // PopulateComments
@@ -36,9 +36,9 @@ func (s *Story) PopulateComments(wg *sync.WaitGroup) {
 		jc <- strconv.Itoa(v)
 	}
 	close(jc)
-	cc := make(chan *comment.Comment, len(kids))
+	cc := make(chan hn.HackerNewsObject, len(kids))
 	var cwg sync.WaitGroup
-	for i := 0; i < 2; i++ {
+	for i := 0; i < len(kids); i++ {
 		cwg.Add(1)
 		go commentWorker(jc, cc, &cwg)
 	}
@@ -46,13 +46,13 @@ func (s *Story) PopulateComments(wg *sync.WaitGroup) {
 		cwg.Wait()
 		close(cc)
 	}()
-	cs := make([]*comment.Comment, 0, len(kids))
+	cs := make([]hn.HackerNewsObject, 0, len(kids))
 	for v := range cc {
-		if v.Type == "comment" {
+		if v.GetType() == "comment" {
 			cs = append(cs, v)
 		}
 	}
-	sort.Sort(comment.CommentsByTime(cs))
+	sort.Sort(hn.ByTime(cs))
 	s.Comments = cs
 	for _, v := range cs {
 		wg.Add(1)
@@ -60,14 +60,22 @@ func (s *Story) PopulateComments(wg *sync.WaitGroup) {
 	}
 }
 
-func (s *Story) GetComments() []*comment.Comment {
-	return s.Comments
+func (s *Story) GetType() string {
+	return s.Type
 }
 
 func (s *Story) GetKids() []int {
 	return s.Kids
 }
 
-func (s *Story) GetType() string {
-	return s.Type
+func (s *Story) GetScore() int {
+	return s.Score
+}
+
+func (s *Story) GetTime() int {
+	return s.Time
+}
+
+func (s *Story) GetID() int {
+	return s.ID
 }

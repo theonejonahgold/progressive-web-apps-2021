@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	hn "github.com/theonejonahgold/pwa/hackernews"
 )
 
 var (
@@ -28,7 +30,7 @@ var (
 	}
 )
 
-func commentWorker(jc <-chan string, cc chan<- *Comment, wg *sync.WaitGroup) {
+func commentWorker(jc <-chan string, cc chan<- hn.HackerNewsObject, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for id := range jc {
@@ -53,7 +55,7 @@ func commentWorker(jc <-chan string, cc chan<- *Comment, wg *sync.WaitGroup) {
 	}
 }
 
-func Parse(res *http.Response) (*Comment, error) {
+func Parse(res *http.Response) (hn.HackerNewsObject, error) {
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
