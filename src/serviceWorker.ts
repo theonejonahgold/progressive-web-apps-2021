@@ -3,20 +3,28 @@
 // const CACHE_NAME = `henkerkesh-${
 //   (import.meta as Record<string, any>).env.SNOWPACK_PUBLIC_SALT
 // }`
-const CACHE_NAME = 'henkerkesh'
-const CACHE_URLS = ['/', '/offline/', '/styles/main.css', '/scripts/main.js']
-let cacheName = CACHE_NAME
+const CORE_CACHE = 'henkercore'
+const PAGE_CACHE = 'henkerpage'
+const ASSET_CACHE = 'henkerasset'
+const CORE_CACHE_URLS = [
+  '/',
+  '/offline/',
+  '/styles/main.css',
+  '/scripts/main.js',
+]
+let coreCacheName = CORE_CACHE
+let pageCacheName = PAGE_CACHE
+let assetCacheName = ASSET_CACHE
 
 // Solution for type problems from: https://github.com/Microsoft/TypeScript/issues/11781#issuecomment-785350836
 const sw: ServiceWorkerGlobalScope & typeof globalThis = self as any
 
 sw.addEventListener('install', e => {
   e.waitUntil(async () => {
-    const res = await fetch('/version')
-    const version = await res.text()
-    cacheName = `${CACHE_NAME}-${version}`
-    const cache = await caches.open(cacheName)
-    await cache.addAll(CACHE_URLS)
+    await updateCacheNames()
+    console.log(coreCacheName)
+    const cache = await caches.open(coreCacheName)
+    await cache.addAll(CORE_CACHE_URLS)
   })
 })
 
@@ -24,35 +32,51 @@ sw.addEventListener('activate', e => {
   sw.clients.claim()
   e.waitUntil(
     (async () => {
-      const res = await fetch('/version')
-      const version = await res.text()
-      cacheName = `${CACHE_NAME}-${version}`
+      await updateCacheNames()
       const keys = await caches.keys()
       await Promise.all(
-        keys.filter(key => key !== cacheName).map(key => caches.delete(key)),
+        keys
+          .filter(key => key !== pageCacheName)
+          .map(key => caches.delete(key)),
       )
     })(),
   )
 })
 
 sw.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') {
-    return
-  }
   e.respondWith(
     (async () => {
-      const cacheRes = await caches.match(e.request, {
-        ignoreSearch: true,
-      })
+      if (e.request.method !== 'GET') return fetch(e.request)
+      const cacheRes = await caches.match(e.request, { ignoreSearch: true })
       if (cacheRes) return cacheRes
-      const cache = await caches.open(cacheName)
-      try {
-        const res = await fetch(e.request)
-        cache.put(e.request, res.clone())
-        return res
-      } catch {
-        return (await cache.match('/offline/')) as Response
+      const url = new URL(e.request.url)
+      console.log(url.pathname)
+      if (url.pathname.includes('/story/')) {
+        return addToCache(pageCacheName, e.request)
       }
+      if (CORE_CACHE_URLS.includes(url.pathname)) {
+        return addToCache(coreCacheName, e.request)
+      }
+      return addToCache(assetCacheName, e.request)
     })(),
   )
 })
+
+async function updateCacheNames() {
+  const res = await fetch('/version')
+  const version = await res.text()
+  coreCacheName = `${CORE_CACHE}-${version}`
+  pageCacheName = `${PAGE_CACHE}-${version}`
+  assetCacheName = `${ASSET_CACHE}-${version}`
+}
+
+async function addToCache(name: string, req: Request): Promise<Response> {
+  const cache = await caches.open(name)
+  try {
+    const res = await fetch(req)
+    cache.put(req, res.clone())
+    return res
+  } catch {
+    return (await caches.match('/offline/')) as Response
+  }
+}

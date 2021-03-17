@@ -35,6 +35,9 @@ func Build() error {
 	if err := snowpack.RunBuild(); err != nil {
 		return err
 	}
+	if err := saveBuildTimeToDisk(); err != nil {
+		return err
+	}
 	log.Println("Done building!")
 	return nil
 }

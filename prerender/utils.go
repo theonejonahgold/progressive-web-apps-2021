@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 )
 
 func createFile(path string) (*os.File, error) {
@@ -18,4 +20,12 @@ func clearDistFolder() error {
 	d, _ := os.Getwd()
 	fp := filepath.Join(d, "dist")
 	return os.RemoveAll(fp)
+}
+
+func saveBuildTimeToDisk() error {
+	timeStamp := time.Now().Unix()
+	d, _ := os.Getwd()
+	fp := filepath.Join(d, "dist", "build-timestamp.txt")
+	err := os.WriteFile(fp, []byte(strconv.Itoa(int(timeStamp))), 0770)
+	return err
 }

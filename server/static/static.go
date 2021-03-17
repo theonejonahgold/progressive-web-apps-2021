@@ -1,11 +1,11 @@
 package static
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
-	"time"
 )
 
 // New creates a new http handler for static file serving
@@ -15,9 +15,16 @@ func New() http.Handler {
 	r := http.NewServeMux()
 	r.Handle("/", http.FileServer(http.Dir(fp)))
 	r.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
-		v := strconv.Itoa(time.Now().Hour()) + "-" + strconv.Itoa(time.Now().Day())
+		bfp := filepath.Join(fp, "build-timestamp.txt")
+		v, err := os.ReadFile(bfp)
+		if err != nil {
+			log.Println(fmt.Errorf("something went wrong while trying to fetch build timestamp: %v", err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(v))
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(v)
 	})
 	return r
 }
