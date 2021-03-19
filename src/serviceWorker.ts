@@ -20,7 +20,7 @@ sw.addEventListener('install', e => {
       await updateCacheNames()
       const cache = await caches.open(coreCacheName)
       await cache.addAll(CORE_CACHE_URLS)
-      sw.skipWaiting()
+      await sw.skipWaiting()
     })(),
   )
 })
