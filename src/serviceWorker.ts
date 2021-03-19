@@ -46,15 +46,15 @@ sw.addEventListener('activate', e => {
 })
 
 sw.addEventListener('fetch', async e => {
-  if (e.request.method !== 'GET') e.respondWith(fetch(e.request))
+  if (e.request.method !== 'GET') return e.respondWith(fetch(e.request))
   const cacheRes = await caches.match(e.request, { ignoreSearch: true })
-  if (cacheRes) e.respondWith(cacheRes)
+  if (cacheRes) return e.respondWith(cacheRes)
   const url = new URL(e.request.url)
   if (url.pathname.includes('/story/') || url.pathname === '/')
-    e.respondWith(addToCache(pageCacheName, e.request))
+    return e.respondWith(addToCache(pageCacheName, e.request))
   if (CORE_CACHE_URLS.includes(url.pathname))
-    e.respondWith(addToCache(coreCacheName, e.request))
-  e.respondWith(addToCache(assetCacheName, e.request))
+    return e.respondWith(addToCache(coreCacheName, e.request))
+  return e.respondWith(addToCache(assetCacheName, e.request))
 })
 
 async function updateCacheNames() {
