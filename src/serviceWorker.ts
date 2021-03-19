@@ -6,12 +6,7 @@
 const CORE_CACHE = 'henkercore'
 const PAGE_CACHE = 'henkerpage'
 const ASSET_CACHE = 'henkerasset'
-const CORE_CACHE_URLS = [
-  '/',
-  '/offline/',
-  '/styles/main.css',
-  '/scripts/main.js',
-]
+const CORE_CACHE_URLS = ['/offline', '/styles/main.css', '/scripts/main.js']
 let coreCacheName = CORE_CACHE
 let pageCacheName = PAGE_CACHE
 let assetCacheName = ASSET_CACHE
@@ -20,12 +15,14 @@ let assetCacheName = ASSET_CACHE
 const sw: ServiceWorkerGlobalScope & typeof globalThis = self as any
 
 sw.addEventListener('install', e => {
-  e.waitUntil(async () => {
-    await updateCacheNames()
-    console.log(coreCacheName)
-    const cache = await caches.open(coreCacheName)
-    await cache.addAll(CORE_CACHE_URLS)
-  })
+  e.waitUntil(
+    (async () => {
+      await updateCacheNames()
+      const cache = await caches.open(coreCacheName)
+      await cache.addAll(CORE_CACHE_URLS)
+      sw.skipWaiting()
+    })(),
+  )
 })
 
 sw.addEventListener('activate', e => {
@@ -36,30 +33,28 @@ sw.addEventListener('activate', e => {
       const keys = await caches.keys()
       await Promise.all(
         keys
-          .filter(key => key !== pageCacheName)
-          .map(key => caches.delete(key)),
+          .filter(
+            key =>
+              (key.includes(PAGE_CACHE) && key !== pageCacheName) ||
+              (key.includes(CORE_CACHE) && key !== coreCacheName) ||
+              (key.includes(ASSET_CACHE) && key !== assetCacheName),
+          )
+          .map(caches.delete),
       )
     })(),
   )
 })
 
-sw.addEventListener('fetch', e => {
-  e.respondWith(
-    (async () => {
-      if (e.request.method !== 'GET') return fetch(e.request)
-      const cacheRes = await caches.match(e.request, { ignoreSearch: true })
-      if (cacheRes) return cacheRes
-      const url = new URL(e.request.url)
-      console.log(url.pathname)
-      if (url.pathname.includes('/story/')) {
-        return addToCache(pageCacheName, e.request)
-      }
-      if (CORE_CACHE_URLS.includes(url.pathname)) {
-        return addToCache(coreCacheName, e.request)
-      }
-      return addToCache(assetCacheName, e.request)
-    })(),
-  )
+sw.addEventListener('fetch', async e => {
+  if (e.request.method !== 'GET') e.respondWith(fetch(e.request))
+  const cacheRes = await caches.match(e.request, { ignoreSearch: true })
+  if (cacheRes) e.respondWith(cacheRes)
+  const url = new URL(e.request.url)
+  if (url.pathname.includes('/story/') || url.pathname === '/')
+    e.respondWith(addToCache(pageCacheName, e.request))
+  if (CORE_CACHE_URLS.includes(url.pathname))
+    e.respondWith(addToCache(coreCacheName, e.request))
+  e.respondWith(addToCache(assetCacheName, e.request))
 })
 
 async function updateCacheNames() {
