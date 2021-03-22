@@ -31,9 +31,7 @@ sw.addEventListener('activate', e => {
         keys
           .filter(
             key =>
-              (key.includes(PAGE_CACHE) && key !== PAGE_CACHE) ||
-              (key.includes(CORE_CACHE) && key !== CORE_CACHE) ||
-              (key.includes(ASSET_CACHE) && key !== ASSET_CACHE),
+              key !== PAGE_CACHE && key !== CORE_CACHE && key !== ASSET_CACHE,
           )
           .map(caches.delete),
       )
