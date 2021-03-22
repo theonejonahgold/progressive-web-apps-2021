@@ -1,11 +1,9 @@
 /// <reference lib="webworker" />
 
-// const CACHE_NAME = `henkerkesh-${
-//   (import.meta as Record<string, any>).env.SNOWPACK_PUBLIC_SALT
-// }`
-const CORE_CACHE = 'henkercore'
-const PAGE_CACHE = 'henkerpage'
-const ASSET_CACHE = 'henkerasset'
+const VERSION = 'v1'
+const CORE_CACHE = `henkercore-${VERSION}`
+const PAGE_CACHE = `henkerpage-${VERSION}`
+const ASSET_CACHE = `henkerasset-${VERSION}`
 const CORE_CACHE_URLS = ['/offline', '/styles/main.css', '/scripts/main.js']
 let timestamp = ''
 
@@ -18,7 +16,7 @@ sw.addEventListener('install', e => {
       const cache = await caches.open(CORE_CACHE)
       await cache.addAll(CORE_CACHE_URLS)
       await sw.skipWaiting()
-    })(),
+    })()
   )
 })
 
@@ -31,11 +29,12 @@ sw.addEventListener('activate', e => {
         keys
           .filter(
             key =>
-              key !== PAGE_CACHE && key !== CORE_CACHE && key !== ASSET_CACHE,
+              key !== PAGE_CACHE && key !== CORE_CACHE && key !== ASSET_CACHE
           )
-          .map(caches.delete),
+          .map(key => caches.delete(key))
       )
-    })(),
+      await sw.skipWaiting()
+    })()
   )
 })
 
@@ -50,7 +49,7 @@ sw.addEventListener('fetch', e => {
       if (CORE_CACHE_URLS.includes(url.pathname))
         return addToCache(CORE_CACHE, e.request)
       return addToCache(ASSET_CACHE, e.request)
-    }),
+    })
   )
 })
 
@@ -60,11 +59,13 @@ sw.addEventListener('message', e => {
 })
 
 sw.addEventListener('sync', e => {
+  console.log(e)
   if (e.tag === 'sync-pages') e.waitUntil(synchronisePages)
 })
 
 // @ts-expect-error: Periodic sync is an event that is supported, but not typed
 sw.addEventListener('periodicsync', (e: SyncEvent) => {
+  console.log(e)
   if (e.tag === 'sync-pages') e.waitUntil(synchronisePages)
 })
 
