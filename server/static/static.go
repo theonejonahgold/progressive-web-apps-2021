@@ -15,7 +15,12 @@ func New() http.Handler {
 	wd, _ := os.Getwd()
 	fp := filepath.Join(wd, "dist")
 	r := http.NewServeMux()
-	r.Handle("/", gziphandler.GzipHandler(http.FileServer(http.Dir(fp))))
+	opts := gziphandler.CompressionLevel(9)
+	gzh, err := gziphandler.GzipHandlerWithOpts(opts)
+	if err != nil {
+		panic(err)
+	}
+	r.Handle("/", gzh(http.FileServer(http.Dir(fp))))
 	r.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		bfp := filepath.Join(fp, "build-timestamp.txt")
 		v, err := os.ReadFile(bfp)
