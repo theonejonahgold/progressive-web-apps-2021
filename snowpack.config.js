@@ -1,6 +1,4 @@
 /* eslint-env node */
-process.env.SNOWPACK_PUBLIC_SALT = new Date().valueOf()
-
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
   mount: {
