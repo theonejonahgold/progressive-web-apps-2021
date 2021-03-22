@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/NYTimes/gziphandler"
 )
 
 // New creates a new http handler for static file serving
@@ -13,7 +15,7 @@ func New() http.Handler {
 	wd, _ := os.Getwd()
 	fp := filepath.Join(wd, "dist")
 	r := http.NewServeMux()
-	r.Handle("/", http.FileServer(http.Dir(fp)))
+	r.Handle("/", gziphandler.GzipHandler(http.FileServer(http.Dir(fp))))
 	r.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		bfp := filepath.Join(fp, "build-timestamp.txt")
 		v, err := os.ReadFile(bfp)
