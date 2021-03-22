@@ -13,6 +13,7 @@ module.exports = {
     out: 'dist',
     watch: process.env.NODE_ENV !== 'production',
     clean: false,
+    sourcemap: true,
   },
   packageOptions: { source: 'remote', types: true },
   optimize: {

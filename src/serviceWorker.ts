@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-const VERSION = 'v1'
+const VERSION = 'v2'
 const CORE_CACHE = `henkercore-${VERSION}`
 const PAGE_CACHE = `henkerpage-${VERSION}`
 const ASSET_CACHE = `henkerasset-${VERSION}`
@@ -21,9 +21,9 @@ sw.addEventListener('install', e => {
 })
 
 sw.addEventListener('activate', e => {
-  sw.clients.claim()
   e.waitUntil(
     (async () => {
+      await sw.clients.claim()
       const keys = await caches.keys()
       await Promise.all(
         keys
@@ -55,18 +55,16 @@ sw.addEventListener('fetch', e => {
 
 sw.addEventListener('message', e => {
   if ('timestamp' in e.data) timestamp = e.data.timestamp
-  if ('sync' in e.data) e.waitUntil(synchronisePages)
+  if ('sync' in e.data) e.waitUntil(synchronisePages())
 })
 
 sw.addEventListener('sync', e => {
-  console.log(e)
-  if (e.tag === 'sync-pages') e.waitUntil(synchronisePages)
+  if (e.tag === 'sync-pages') e.waitUntil(synchronisePages())
 })
 
 // @ts-expect-error: Periodic sync is an event that is supported, but not typed
 sw.addEventListener('periodicsync', (e: SyncEvent) => {
-  console.log(e)
-  if (e.tag === 'sync-pages') e.waitUntil(synchronisePages)
+  if (e.tag === 'sync-pages') e.waitUntil(synchronisePages())
 })
 
 async function synchronisePages() {
@@ -74,12 +72,16 @@ async function synchronisePages() {
   const newTimestamp = await res.text()
   if (timestamp !== newTimestamp) {
     timestamp = newTimestamp
-    sw.postMessage({ timestamp })
+    const clients = await sw.clients.matchAll()
+    clients.forEach(client => client.postMessage({ timestamp }))
     const cache = await caches.open(PAGE_CACHE)
     const reqs = await cache.keys()
-    await Promise.all(reqs.map(req => addToCache(PAGE_CACHE, req)))
-    await sw.skipWaiting()
+    console.log(reqs.map(req => req.url))
+    await Promise.all(
+      reqs.map(req => fetch(req).then(res => cache.put(req, res.clone())))
+    )
   }
+  await sw.skipWaiting()
 }
 
 async function addToCache(name: string, req: Request): Promise<Response> {

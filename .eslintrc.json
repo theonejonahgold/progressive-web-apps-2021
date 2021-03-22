@@ -29,6 +29,7 @@
         "trailingComma": "es5"
       }
     ],
+    "no-empty": "off",
     "@typescript-eslint/no-explicit-any": "off"
   }
 }

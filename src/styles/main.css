@@ -3,17 +3,27 @@
 }
 
 body {
-  margin: 0 auto;
-  max-width: 80rem;
-  padding: 0 1rem;
+  margin: 0;
 }
 
-header {
+header div, main {
+  padding: 0 1rem;
+  margin: 0 auto;
+  max-width: 80rem;
+}
+
+header div {
+  padding: 1rem;
   background-color: #ff6600;
 }
 
 header h1 {
   margin-top: 0;
+}
+
+header a {
+  color: black;
+  font-weight: bold;
 }
 
 ul {

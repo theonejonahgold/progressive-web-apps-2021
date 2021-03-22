@@ -32,6 +32,9 @@ func Build() error {
 	if _, err := offline(); err != nil {
 		return err
 	}
+	if _, err := favourites(); err != nil {
+		return err
+	}
 	if err := snowpack.RunBuild(); err != nil {
 		return err
 	}
@@ -73,6 +76,10 @@ func storyPage(s hn.HackerNewsObject, wg *sync.WaitGroup) (int, error) {
 
 func offline() (int, error) {
 	return r.Render(pageWriter{"offline/index.html"}, "offline.hbs", map[string]interface{}{}, "layouts/main.hbs")
+}
+
+func favourites() (int, error) {
+	return r.Render(pageWriter{"favourites/index.html"}, "favourites.hbs", map[string]interface{}{}, "layouts/main.hbs")
 }
 
 type pageWriter struct {

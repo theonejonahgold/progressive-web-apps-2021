@@ -6,7 +6,7 @@
     "start_url": "/",
     "name": "Henkernieuws",
     "short_name": "HN",
-    "description": "Nieuws oonlie voor riel henkers",
+    "description": "Oonlie voor riel henkers",
     "icons": [
         {
             "src": "/icon-192x192.png",
@@ -27,6 +27,12 @@
             "src": "/icon-512x512.png",
             "sizes": "512x512",
             "type": "image/png"
+        },
+        {
+            "src": "/maskable_icon.png",
+            "sizes": "192x192 256x256 512x512 1024x1024",
+            "type": "image/png",
+            "purpose": "maskable"
         }
     ]
 }

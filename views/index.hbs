@@ -1,19 +1,28 @@
-<ul>
-  {{#each stories}}
-  {{#unless this.deleted}}
-  {{#unless this.dead}}
-  {{#if this.title}}
-  <li>
-    <article>
-      <a href="{{this.uRL}}" target="_blank" rel="noopener norefferer">
-        <h3>{{this.title}}</h3>
-      </a>
-      <p>Bij {{this.by}} wif {{this.score}} points</p>
-      <a href="/story/{{this.iD}}/">reactions</a>
-    </article>
-  </li>
-  {{/if}}
-  {{/unless}}
-  {{/unless}}
-  {{/each}}
-</ul>
+<main>
+  <h3>Top stoories</h3>
+  <ul>
+    {{#each stories}}
+    {{#unless this.deleted}}
+    {{#unless this.dead}}
+    {{#if this.title}}
+    <li>
+      <article>
+        {{#if this.uRL}}
+        <a href="{{this.uRL}}" target="_blank" rel="noopener noreferrer">
+          {{/if}}
+          <h4>{{this.title}}</h4>
+          {{#if this.uRL}}
+        </a>
+        {{/if}}
+        <button disabled data-favourite data-id="{{this.iD}}" data-title="{{this.title}}"
+          data-comments="{{len comments}}" data-url="{{this.uRL}}" data-author="{{this.by}}">Favourite</button>
+        <p>Bij {{this.by}} wif {{this.score}} points</p>
+        <a href="/story/{{this.iD}}/">reactions</a>
+      </article>
+    </li>
+    {{/if}}
+    {{/unless}}
+    {{/unless}}
+    {{/each}}
+  </ul>
+</main>
