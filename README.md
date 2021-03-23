@@ -19,6 +19,7 @@ Ritten in go en javascript, lijk ee pro.
 - [Tooling implementation](#tooling-implementation)
   - [Server](#server)
   - [Static site generation](#static-site-generation)
+- [Service worker flow](#service-worker-flow)
 - [Packages used](#packages-used)
   - [Go](#go)
   - [Web](#web)
@@ -55,7 +56,7 @@ $ ./pwa dev        # Runs a server dynamically serving handlebars templates.
 - [x] Best HackerNews clone to ever exist
 - [X] Caching with service workers
 - [X] Periodic rerendering on production
-  - [ ] Updating service worker caches automatically
+  - [x] Updating service worker caches automatically
 
 ## API used
 
@@ -93,6 +94,10 @@ The static site generation happens in `prerender/prerender.go`. You can see that
 4. Rendering the story pages
 5. Rendering the offline pages
 6. Running the Snowpack production build command
+
+## Service worker flow
+
+![Diagram of the service worker flow](docs/sw_flow.png)
 
 ## Packages used
 

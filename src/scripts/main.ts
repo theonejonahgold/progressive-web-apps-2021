@@ -14,9 +14,8 @@ window.addEventListener('load', async () => {
     if (timestamp) reg.active?.postMessage({ timestamp })
     if ('periodicSync' in reg) periodicallySyncPages(reg)
     else if ('sync' in reg) {
-      syncPages(reg)
-      if ('sync' in reg && !navigator.onLine)
-        window.addEventListener('online', () => syncPages(reg))
+      if (navigator.onLine) return syncPages(reg)
+      window.addEventListener('online', () => syncPages(reg))
     }
   }
   prepareDB()
