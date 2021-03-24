@@ -23,8 +23,6 @@ async function periodicallySyncPages(reg: ServiceWorkerRegistration) {
   })
   if (status.state !== 'granted') return syncPages(reg)
   // @ts-expect-error: Periodic Sync is supported in Chrome but not typed
-  await reg.periodicSync.unregister('sync-pages')
-  // @ts-expect-error: Periodic Sync is supported in Chrome but not typed
   const tags = await reg.periodicSync.getTags()
   if (!tags.includes('sync-pages')) {
     try {
@@ -36,11 +34,22 @@ async function periodicallySyncPages(reg: ServiceWorkerRegistration) {
       console.error(err)
     }
   }
+  if (!tags.includes('sync-favourites')) {
+    try {
+      // @ts-expect-error: Periodic Sync is supported in Chrome but not typed
+      await reg.periodicSync.register('sync-favourites', {
+        minInterval: 60 * 60 * 1000,
+      })
+    } catch (err) {
+      console.error(err)
+    }
+  }
 }
 
 async function syncPages(reg: ServiceWorkerRegistration) {
   try {
     await reg.sync.register('sync-pages')
+    await reg.sync.register('sync-favourites')
   } catch (err) {
     console.error(err)
     if (reg.active) reg.active.postMessage({ sync: true })

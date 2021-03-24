@@ -5,7 +5,12 @@ const CORE_CACHE = `henkercore-${VERSION}`
 const PAGE_CACHE = `henkerpage-${VERSION}`
 const ASSET_CACHE = `henkerasset-${VERSION}`
 const FAVOURITES_CACHE = `henkerfavourites`
-const CORE_CACHE_URLS = ['/offline', '/styles/main.css', '/scripts/main.js']
+const CORE_CACHE_URLS = [
+  '/favourites',
+  '/offline',
+  '/styles/main.css',
+  '/scripts/main.js',
+]
 let timestamp = ''
 
 // Solution for type problems from: https://github.com/Microsoft/TypeScript/issues/11781#issuecomment-785350836
@@ -66,25 +71,32 @@ sw.addEventListener('fetch', e => {
 })
 
 sw.addEventListener('message', e => {
-  if ('sync' in e.data) e.waitUntil(synchronisePages())
+  if ('sync' in e.data) {
+    e.waitUntil(synchronisePages(PAGE_CACHE))
+    e.waitUntil(synchronisePages(FAVOURITES_CACHE))
+  }
 })
 
 sw.addEventListener('sync', e => {
-  if (e.tag === 'sync-pages') e.waitUntil(synchronisePages())
+  if (e.tag === 'sync-pages') e.waitUntil(synchronisePages(PAGE_CACHE))
+  if (e.tag === 'sync-favourites')
+    e.waitUntil(synchronisePages(FAVOURITES_CACHE))
 })
 
 // @ts-expect-error: Periodic sync is an event that is supported, but not typed
 sw.addEventListener('periodicsync', (e: SyncEvent) => {
-  if (e.tag === 'sync-pages') e.waitUntil(synchronisePages())
+  if (e.tag === 'sync-pages') e.waitUntil(synchronisePages(PAGE_CACHE))
+  if (e.tag === 'sync-favourites')
+    e.waitUntil(synchronisePages(FAVOURITES_CACHE))
 })
 
-async function synchronisePages() {
+async function synchronisePages(cacheName: string) {
   const res = await fetch('/version')
   const newTimestamp = await res.text()
   if (timestamp !== newTimestamp) {
     timestamp = newTimestamp
     saveTimestampToDB(timestamp)
-    const cache = await caches.open(PAGE_CACHE)
+    const cache = await caches.open(cacheName)
     const reqs = await cache.keys()
     await Promise.all(
       reqs.map(req => fetch(req).then(res => cache.put(req, res.clone())))
