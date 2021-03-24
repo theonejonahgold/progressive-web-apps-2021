@@ -88,7 +88,7 @@ type pageWriter struct {
 
 func (s pageWriter) Write(data []byte) (n int, err error) {
 	d, _ := os.Getwd()
-	fp := filepath.Join(d, "dist", s.path)
+	fp := filepath.Join(d, "public", s.path)
 	f, err := createFile(fp)
 	if err != nil {
 		return 0, err

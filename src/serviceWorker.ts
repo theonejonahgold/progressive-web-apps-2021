@@ -4,6 +4,7 @@ const VERSION = 'v2'
 const CORE_CACHE = `henkercore-${VERSION}`
 const PAGE_CACHE = `henkerpage-${VERSION}`
 const ASSET_CACHE = `henkerasset-${VERSION}`
+const FAVOURITES_CACHE = `henkerfavourites`
 const CORE_CACHE_URLS = ['/offline', '/styles/main.css', '/scripts/main.js']
 let timestamp = ''
 
@@ -36,6 +37,17 @@ sw.addEventListener('activate', e => {
       await sw.skipWaiting()
     })()
   )
+  e.waitUntil(
+    (async () => {
+      let ts = await getTimestampFromDB()
+      if (ts === '') {
+        const res = await fetch('/version')
+        ts = await res.text()
+        saveTimestampToDB(ts)
+      }
+      timestamp = ts
+    })()
+  )
 })
 
 sw.addEventListener('fetch', e => {
@@ -54,7 +66,6 @@ sw.addEventListener('fetch', e => {
 })
 
 sw.addEventListener('message', e => {
-  if ('timestamp' in e.data) timestamp = e.data.timestamp
   if ('sync' in e.data) e.waitUntil(synchronisePages())
 })
 
@@ -72,11 +83,9 @@ async function synchronisePages() {
   const newTimestamp = await res.text()
   if (timestamp !== newTimestamp) {
     timestamp = newTimestamp
-    const clients = await sw.clients.matchAll()
-    clients.forEach(client => client.postMessage({ timestamp }))
+    saveTimestampToDB(timestamp)
     const cache = await caches.open(PAGE_CACHE)
     const reqs = await cache.keys()
-    console.log(reqs.map(req => req.url))
     await Promise.all(
       reqs.map(req => fetch(req).then(res => cache.put(req, res.clone())))
     )
@@ -93,4 +102,82 @@ async function addToCache(name: string, req: Request): Promise<Response> {
   } catch {
     return (await caches.match('/offline/')) as Response
   }
+}
+
+function getTimestampFromDB(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const dbReq = indexedDB.open('henkernieuws', 3)
+    dbReq.addEventListener('upgradeneeded', function (this: IDBOpenDBRequest) {
+      const db = this.result
+      if (!db.objectStoreNames.contains('timestamp'))
+        db.createObjectStore('timestamp', {
+          keyPath: 'timestamp',
+          autoIncrement: false,
+        })
+    })
+    dbReq.addEventListener('success', function (this: IDBOpenDBRequest) {
+      const db = this.result
+      const tx = db.transaction('timestamp', 'readwrite')
+      const store = tx.objectStore('timestamp')
+      const req = store.getAll()
+      req.addEventListener('success', function () {
+        if (!this.result.length) resolve('')
+        resolve(this.result[0].timestamp)
+      })
+      req.addEventListener('error', reject)
+      tx.addEventListener('complete', () => console.log('tx complete'))
+    })
+  })
+}
+
+function saveTimestampToDB(timestamp: string) {
+  removeTimestampFromDB()
+  const dbReq = indexedDB.open('henkernieuws', 3)
+  dbReq.addEventListener('upgradeneeded', function (this: IDBOpenDBRequest) {
+    const db = this.result
+    if (!db.objectStoreNames.contains('timestamp'))
+      db.createObjectStore('timestamp', {
+        keyPath: 'timestamp',
+        autoIncrement: false,
+      })
+  })
+  dbReq.addEventListener('success', function (this: IDBOpenDBRequest) {
+    const db = this.result
+    const tx = db.transaction('timestamp', 'readwrite')
+    const store = tx.objectStore('timestamp')
+    const req = store.add({ timestamp })
+    req.addEventListener('success', () =>
+      console.log(`timestamp ${timestamp} saved`)
+    )
+    req.addEventListener('error', () =>
+      console.log('something went wrong while saving')
+    )
+    tx.addEventListener('complete', () => console.log('tx complete'))
+  })
+}
+
+function removeTimestampFromDB() {
+  const dbReq = indexedDB.open('henkernieuws', 3)
+  dbReq.addEventListener('upgradeneeded', function (this: IDBOpenDBRequest) {
+    const db = this.result
+    if (!db.objectStoreNames.contains('timestamp'))
+      db.createObjectStore('timestamp', {
+        keyPath: 'timestamp',
+        autoIncrement: false,
+      })
+  })
+  dbReq.addEventListener('success', function (this: IDBOpenDBRequest) {
+    const db = this.result
+    const tx = db.transaction('timestamp', 'readwrite')
+    const store = tx.objectStore('timestamp')
+    const req = store.getAllKeys()
+    req.addEventListener('success', function (this: IDBRequest<IDBValidKey[]>) {
+      const keys = this.result
+      keys.forEach(key => store.delete(key))
+    })
+    req.addEventListener('error', () =>
+      console.log('something went wrong while saving')
+    )
+    tx.addEventListener('complete', () => console.log('tx complete'))
+  })
 }

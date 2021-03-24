@@ -1,0 +1,14 @@
+<li>
+  <article>
+    {{#if this.uRL}}
+    <a href="{{this.uRL}}" target="_blank" rel="noopener noreferrer">
+      {{/if}}
+      <h4>{{this.title}}</h4>
+      {{#if this.uRL}}
+    </a>
+    {{/if}}
+    <button disabled data-favourite-button data-id="{{this.iD}}">Favourite</button>
+    <p>Bij {{this.by}} wif {{this.score}} points</p>
+    <a href="/story/{{this.iD}}/">reactions</a>
+  </article>
+</li>

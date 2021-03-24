@@ -6,21 +6,14 @@ window.addEventListener('load', async () => {
       updateViaCache: 'all',
     })
     const reg = await navigator.serviceWorker.ready
-    navigator.serviceWorker.addEventListener('message', e => {
-      if ('timestamp' in e.data)
-        localStorage.setItem('build-timestamp', e.data.timestamp)
-    })
-    const timestamp = localStorage.getItem('build-timestamp')
-    if (timestamp) reg.active?.postMessage({ timestamp })
     if ('periodicSync' in reg) periodicallySyncPages(reg)
     else if ('sync' in reg) {
       if (navigator.onLine) return syncPages(reg)
       window.addEventListener('online', () => syncPages(reg))
     }
+    if (window.location.pathname.includes('favourites')) initFavouritePage()
+    else initFavouriteButtons()
   }
-  prepareDB()
-  initFavouriteButtons()
-  if (window.location.pathname.includes('favourites')) initFavouritePage()
 })
 
 async function periodicallySyncPages(reg: ServiceWorkerRegistration) {
@@ -50,103 +43,77 @@ async function syncPages(reg: ServiceWorkerRegistration) {
     await reg.sync.register('sync-pages')
   } catch (err) {
     console.error(err)
-    reg.active?.postMessage({ sync: true })
+    if (reg.active) reg.active.postMessage({ sync: true })
   }
 }
 
-function prepareDB() {
-  const dbReq = indexedDB.open('henkernieuws', 2)
-  dbReq.addEventListener('upgradeneeded', function (this: IDBOpenDBRequest) {
-    const db = this.result
-    if (!db.objectStoreNames.contains('favourites'))
-      db.createObjectStore('favourites', {
-        keyPath: 'id',
-        autoIncrement: false,
-      })
-  })
-  dbReq.addEventListener('success', () =>
-    console.log('DB successfully prepared')
-  )
-}
-
-function initFavouriteButtons() {
+async function initFavouriteButtons() {
   const buttons: NodeListOf<HTMLButtonElement> = document.querySelectorAll(
-    '[data-favourite]'
+    '[data-favourite-button]'
   )
-  const dbReq = indexedDB.open('henkernieuws', 2)
-  dbReq.addEventListener('success', function (this: IDBOpenDBRequest) {
-    const db = this.result
-    const tx = db.transaction('favourites', 'readonly')
-    const store = tx.objectStore('favourites')
-    const req = store.getAll()
-    req.addEventListener('success', function (this: IDBRequest<any[]>) {
-      buttons.forEach(button => {
-        if (this.result.some(val => val.id === button.dataset.id))
-          button.textContent = 'Remove from favourites'
-        button.removeAttribute('disabled')
-        button.addEventListener('click', toggleFavouriteArticle)
-      })
-    })
-  })
-}
-
-function toggleFavouriteArticle(this: HTMLButtonElement) {
-  const id = this.dataset.id
-  const title = this.dataset.title
-  const url = this.dataset.url
-  const author = this.dataset.author
-  const dbReq = indexedDB.open('henkernieuws', 2)
-  dbReq.addEventListener('success', function (this: IDBOpenDBRequest) {
-    const db = this.result
-    const tx = db.transaction('favourites', 'readonly')
-    const store = tx.objectStore('favourites')
-    const req = store.get(id as string)
-    req.addEventListener('success', function (this: IDBRequest) {
-      const tx = db.transaction('favourites', 'readwrite')
-      const store = tx.objectStore('favourites')
-      let req: IDBRequest
-      if (this.result != undefined) req = store.delete(id as string)
-      else req = store.add({ id, title, url, author })
-      tx.addEventListener('complete', () => console.log('completed tx'))
-      req.addEventListener('success', () => console.log('success'))
-      req.addEventListener('error', () => console.log('error'))
-    })
-  })
-  if (this.textContent == 'Favourite')
-    this.textContent = 'Remove from favourites'
-  else this.textContent = 'Favourite'
-}
-
-function initFavouritePage() {
-  const dbReq = indexedDB.open('henkernieuws', 2)
-  dbReq.addEventListener('success', function (this: IDBOpenDBRequest) {
-    const db = this.result
-    const tx = db.transaction('favourites', 'readonly')
-    const store = tx.objectStore('favourites')
-    const req = store.getAll()
-    req.addEventListener('success', function (this: IDBRequest<any[]>) {
-      const listEl: HTMLUListElement = document.querySelector(
-        '[data-favourites]'
-      ) as HTMLUListElement
-      const content = this.result
-        .map(
-          fav =>
-            `<li><a href="${fav.url}"><h4>${fav.title}</h4></a><p>bij ${fav.author}</p><button data-remove="${fav.id}">Remove from favourites</button></li>`
-        )
-        .join('')
-      listEl.innerHTML = content
-      const removeButtons: NodeListOf<HTMLButtonElement> = document.querySelectorAll(
-        '[data-remove]'
+  const cache = await caches.open('henkerfavourites')
+  const keys = await cache.keys()
+  const urls = keys.map(key => new URL(key.url))
+  buttons.forEach(button => {
+    if (
+      urls.some(
+        url => url.pathname === `/story/${button.dataset.id as string}/`
       )
-      removeButtons.forEach(button => {
-        button.addEventListener('click', function () {
-          const id = this.dataset.remove
-          const tx = db.transaction('favourites', 'readwrite')
-          const store = tx.objectStore('favourites')
-          const req = store.delete(id as string)
-          req.addEventListener('success', () => button.parentElement?.remove())
-        })
-      })
-    })
+    )
+      button.textContent = 'Remove from favourites'
+    button.removeAttribute('disabled')
+    button.addEventListener('click', toggleFavouriteArticle)
   })
+}
+
+async function toggleFavouriteArticle(this: HTMLButtonElement) {
+  const { id } = this.dataset
+  const url = `/story/${id}/`
+  const cache = await caches.open('henkerfavourites')
+  const cacheRes = await cache.match(url)
+  if (!cacheRes) {
+    const res = await fetch(url)
+    await cache.put(url, res)
+    this.textContent = 'Remove from favourites'
+  } else {
+    await cache.delete(url)
+    this.textContent = 'Favourite'
+  }
+}
+
+async function initFavouritePage() {
+  const cache = await caches.open('henkerfavourites')
+  const keys = await cache.keys()
+  const favouritesHtml = (await Promise.all(keys.map(parseFavourite))).join('')
+  const listEl = document.querySelector('[data-favourites]') as HTMLUListElement
+  listEl.innerHTML = favouritesHtml
+  prepareFavourites()
+}
+
+async function parseFavourite(req: Request) {
+  const res = (await caches.match(req)) as Response
+  const html = await res.text()
+  const template = document.createElement('template')
+  template.innerHTML = html
+  const favourite: HTMLTemplateElement = template.content.querySelector(
+    '[data-favourite]'
+  ) as HTMLTemplateElement
+  return favourite.innerHTML
+}
+
+async function prepareFavourites() {
+  const removeButtons = document.querySelectorAll('[data-favourite-button]')
+  removeButtons.forEach(button => {
+    button.removeAttribute('disabled')
+    button.textContent = 'Remove from favourites'
+    button.addEventListener('click', removeFromFavourites)
+  })
+}
+
+async function removeFromFavourites(this: HTMLButtonElement) {
+  const { id } = this.dataset
+  const cache = await caches.open('henkerfavourites')
+  await cache.delete(`/story/${id}/`)
+  if (this.parentElement && this.parentElement.parentElement)
+    this.parentElement.parentElement.remove()
 }
