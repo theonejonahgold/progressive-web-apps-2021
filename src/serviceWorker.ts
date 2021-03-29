@@ -1,13 +1,13 @@
 /// <reference lib="webworker" />
 
-const VERSION = 'v2'
+const VERSION = 'v3'
 const CORE_CACHE = `henkercore-${VERSION}`
 const PAGE_CACHE = `henkerpage-${VERSION}`
 const ASSET_CACHE = `henkerasset-${VERSION}`
 const FAVOURITES_CACHE = `henkerfavourites`
 const CORE_CACHE_URLS = [
-  '/favourites',
-  '/offline',
+  '/favourites/',
+  '/offline/',
   '/styles/main.css',
   '/scripts/main.js',
 ]
@@ -58,7 +58,7 @@ sw.addEventListener('activate', e => {
 sw.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return e.respondWith(fetch(e.request))
   e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then(cacheRes => {
+    caches.match(e.request).then(cacheRes => {
       if (cacheRes) return cacheRes
       const url = new URL(e.request.url)
       if (url.pathname.includes('/story/') || url.pathname === '/')
